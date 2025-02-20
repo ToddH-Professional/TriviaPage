@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 import requests
 import random
+import html
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # For session management
@@ -59,9 +60,10 @@ def ask_question():
     if not question_data:
         return "No question found, try again!"
 
-    question = question_data['question']
-    correct_answer = question_data['correct_answer']
-    options = question_data['incorrect_answers']
+    # Unescape the question and answers to clean them up
+    question = html.unescape(question_data['question'])
+    correct_answer = html.unescape(question_data['correct_answer'])
+    options = [html.unescape(answer) for answer in question_data['incorrect_answers']]
     options.append(correct_answer)  # Add the correct answer
     random.shuffle(options)  # Shuffle the options for randomness
 
@@ -80,11 +82,6 @@ def ask_question():
     return render_template('ask_question.html', question=question, options=options, 
                            feedback_message=feedback_message, selected_answer=selected_answer, 
                            correct_answer=correct_answer)
-
-
-
-
-
 
 if __name__ == '__main__':
     app.run(debug=True)
