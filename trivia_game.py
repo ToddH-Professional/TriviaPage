@@ -65,15 +65,22 @@ def ask_question():
     options.append(correct_answer)  # Add the correct answer
     random.shuffle(options)  # Shuffle the options for randomness
 
+    # Initialize feedback variables
+    feedback_message = None
+    selected_answer = None
+
     if request.method == 'POST':
         selected_answer = request.form['answer']
         if selected_answer == correct_answer:
-            # Award points (You can track and update player scores here)
-            return "Correct! Moving to next question."
+            feedback_message = "Correct! Moving to next question."
         else:
-            return "Wrong answer. Try again."
+            feedback_message = "Wrong answer. Try again."
 
-    return render_template('ask_question.html', question=question, options=options)
+    # Pass the question data, feedback, and answers to the template
+    return render_template('ask_question.html', question=question, options=options, 
+                           feedback_message=feedback_message, selected_answer=selected_answer, 
+                           correct_answer=correct_answer)
+
 
 
 
