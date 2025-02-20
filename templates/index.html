@@ -3,17 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enter Player Names</title>
+    <title>Start Trivia Game</title>
 </head>
 <body>
-    <h1>Enter Player Names</h1>
-    <form method="post">
-        {% for i in range(1, num_players + 1) %}
-            <label>Player {{ i }} Name:</label>
-            <input type="text" name="player_{{ i }}" required>
-            <br>
-        {% endfor %}
-        <button type="submit">Submit Names</button>
+    <h1>Welcome to the Trivia Game!</h1>
+    <form method="POST">
+        <label for="num_players">How many players?</label>
+        <input type="number" id="num_players" name="num_players" min="1" required>
+        <button type="submit">Start Game</button>
     </form>
 </body>
 </html>
