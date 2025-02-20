@@ -13,5 +13,16 @@ def start_game():
     
     return render_template('index.html')  # Render the initial page with the form
 
+@app.route('/get_names', methods=['GET', 'POST'])
+def get_names():
+    num_players = session.get('num_players', 0)  # Get the number of players from the session
+    if request.method == 'POST':
+        # Collect player names and store them in the session
+        players = [request.form[f'player_{i}'] for i in range(1, num_players + 1)]
+        session['players'] = players  # Save the list of players' names in the session
+        return redirect(url_for('choose_category'))  # Redirect to the next step (choose category)
+    
+    return render_template('get_names.html', num_players=num_players)  # Render the player names form
+
 if __name__ == '__main__':
     app.run(debug=True)
