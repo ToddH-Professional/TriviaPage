@@ -6,8 +6,10 @@
     <title>Trivia Game</title>
 </head>
 <body>
-    <h1>Welcome to the Trivia Game!</h1>
-    <p>Click the button below to start.</p>
-    <button onclick="alert('Trivia feature coming soon!')">Get a Trivia Question</button>
+    <h1>How many people want to play?</h1>
+    <form method="post">
+        <input type="number" name="num_players" min="1" required>
+        <button type="submit">Start Game</button>
+    </form>
 </body>
 </html>

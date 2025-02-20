@@ -1,40 +1,17 @@
-from flask import Flask, render_template, jsonify
-import requests
-import random
-import html
-import os
+from flask import Flask, render_template, request, redirect, url_for, session
 
 app = Flask(__name__)
+app.secret_key = 'your_secret_key'  # For session management
 
-def fetch_trivia():
-    url = "https://opentdb.com/api.php?amount=1&type=multiple"
-    response = requests.get(url)
-    response.raise_for_status()
-    trivia_data = response.json()
+@app.route('/', methods=['GET', 'POST'])
+def start_game():
+    if request.method == 'POST':
+        # Get the number of players from the form and save it in session
+        num_players = int(request.form['num_players'])
+        session['num_players'] = num_players  # Store the number of players in the session
+        return redirect(url_for('get_names'))  # Redirect to next step to get names
     
-    if trivia_data["response_code"] == 0:
-        question_data = trivia_data["results"][0]
-        question = html.unescape(question_data["question"])
-        correct_answer = html.unescape(question_data["correct_answer"])
-        all_answers = [html.unescape(ans) for ans in question_data["incorrect_answers"]] + [correct_answer]
-        random.shuffle(all_answers)
-        
-        return {
-            "question": question,
-            "choices": all_answers,
-            "answer": correct_answer
-        }
-    return None
+    return render_template('index.html')  # Render the initial page with the form
 
-@app.route('/')
-def index():
-    trivia = fetch_trivia()
-    return render_template('index.html', trivia=trivia)
-
-@app.route('/get_trivia')
-def get_trivia():
-    trivia = fetch_trivia()
-    return jsonify(trivia)
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+if __name__ == '__main__':
+    app.run(debug=True)
