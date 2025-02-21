@@ -1,31 +1,31 @@
-<!-- choose_category.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Choose a Category</title>
+    <title>Choose Category</title>
 </head>
 <body>
-    <h1>Choose a Category and Difficulty</h1>
+    <h1>Welcome {{ current_player_name }}! It's your turn.</h1>
     <form method="POST">
-        <label for="category">Category:</label>
+        <label for="category">Choose a category:</label>
         <select name="category" required>
             {% for category in categories %}
-                <option value="{{ category.id }}">{{ category.name }}</option>
+                <option value="{{ category }}">{{ category }}</option>
             {% endfor %}
         </select>
+
         <br>
 
-        <label for="difficulty">Difficulty:</label>
+        <label for="difficulty">Choose a difficulty:</label>
         <select name="difficulty" required>
             <option value="easy">Easy</option>
             <option value="medium">Medium</option>
             <option value="hard">Hard</option>
         </select>
-        <br>
 
-        <button type="submit">Choose Category</button>
+        <br>
+        <button type="submit">Submit</button>
     </form>
 </body>
 </html>

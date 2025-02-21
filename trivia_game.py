@@ -8,15 +8,23 @@ import logging
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # For session management
 
+# Initialize the players' scores and names
+players_scores = {}
+player_order = []  # To store the order of players
+current_player_index = 0
+
 @app.route('/', methods=['GET', 'POST'])
 def start_game():
+    # If the form is submitted, we add the players and redirect to the category selection page
     if request.method == 'POST':
-        # Get the number of players from the form
         num_players = int(request.form['num_players'])
-        session['num_players'] = num_players  # Save number of players in session
-        return redirect(url_for('get_names'))  # Go to the next step (get names)
-    
-    return render_template('index.html')  # Render start game page
+        for i in range(num_players):
+            player_name = request.form[f'player_name_{i+1}']
+            players.append(player_name)
+            scores[player_name] = 0  # Initialize their score
+        return redirect(url_for('choose_category'))  # Redirect to the category selection
+
+    return render_template('start_game.html')  # Render the start game page
 
 @app.route('/get_names', methods=['GET', 'POST'])
 def get_names():
@@ -34,90 +42,66 @@ def get_names():
 
 @app.route('/choose_category', methods=['GET', 'POST'])
 def choose_category():
-    # Fetch categories from the trivia API
-    url = "https://opentdb.com/api_category.php"
-    response = requests.get(url)
-    categories = response.json().get('trivia_categories', [])
+    # Simulate category selection (In real app, you'd fetch categories from an API)
+    categories = ['General Knowledge', 'Science', 'History', 'Sports']
+
+    # Get the current player’s turn
+    current_player_name = players[current_player_index]
 
     if request.method == 'POST':
-        # Get the chosen category and difficulty
+        # Get selected category and difficulty
         chosen_category = request.form['category']
         difficulty = request.form['difficulty']
-
-        # Redirect to the next step to fetch questions based on the chosen category and difficulty
+        
+        # Redirect to the ask_question page with the category and difficulty selected
         return redirect(url_for('ask_question', category=chosen_category, difficulty=difficulty))
 
-    return render_template('choose_category.html', categories=categories)  # Render the category selection page
+    return render_template('choose_category.html', categories=categories, current_player_name=current_player_name)
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)  # Adjust the level as necessary
 
-# Set up logging
-logging.basicConfig(level=logging.DEBUG)
-
 @app.route('/ask_question', methods=['GET', 'POST'])
 def ask_question():
-    category = request.args.get('category', '9')  # Default to General Knowledge if no category
-    difficulty = request.args.get('difficulty', 'easy')  # Default to easy if no difficulty
+    global current_player_index
 
-    # Define retry parameters
-    max_retries = 5
-    retry_delay = 2  # Seconds to wait between retries
-    attempt = 0
-    question_data = None
+    category = request.args.get('category')
+    difficulty = request.args.get('difficulty')
 
-    # Try fetching the question with retries
-    while attempt < max_retries:
-        try:
-            url = f"https://opentdb.com/api.php?amount=1&category={category}&difficulty={difficulty}&type=multiple"
-            response = requests.get(url)
-
-            # Handle rate limiting (429 Too Many Requests)
-            if response.status_code == 429:
-                retry_after = response.headers.get('Retry-After', 5)  # Default to 5 seconds
-                logging.warning(f"Rate limit exceeded, retrying after {retry_after} seconds.")
-                time.sleep(int(retry_after))  # Wait before retrying
-                attempt += 1
-                continue
-
-            # Log the API response to see what data we're receiving
-            logging.debug(f"API Response: {response.json()}")
-
-            # If we get a valid response, break the retry loop
-            question_data = response.json().get('results', [])
-            if question_data:
-                question_data = question_data[0]  # Get the first question
-                break
-
-        except (requests.exceptions.RequestException, IndexError) as e:
-            attempt += 1
-            logging.error(f"Error fetching question, attempt {attempt} of {max_retries}: {e}")
-            time.sleep(retry_delay)  # Wait before retrying
+    current_player = player_order[current_player_index]
+    
+    # Fetch a question based on the selected category and difficulty
+    url = f"https://opentdb.com/api.php?amount=1&category={category}&difficulty={difficulty}&type=multiple"
+    response = requests.get(url)
+    question_data = response.json().get('results', [])[0]
 
     if not question_data:
-        return "Sorry, there was an error fetching a question. Please try again later."
+        return "No question found, try again!"
 
-    # Extract question details
-    question = question_data['question']
-    correct_answer = question_data['correct_answer']
-    options = question_data['incorrect_answers']
+    # Unescape the question and answer options
+    question = html.unescape(question_data['question'])
+    correct_answer = html.unescape(question_data['correct_answer'])
+    options = [html.unescape(answer) for answer in question_data['incorrect_answers']]
     options.append(correct_answer)  # Add the correct answer
     random.shuffle(options)  # Shuffle the options
 
-    # Decode any HTML entities in the question text and answers
-    question = html.unescape(question)
-    options = [html.unescape(option) for option in options]
-    correct_answer = html.unescape(correct_answer)  # Also unescape the correct answer
+    # Handle POST request (when user submits an answer)
+    if request.method == 'POST':
+        selected_answer = request.form['answer']
+        if selected_answer == correct_answer:
+            players_scores[current_player] += 1  # Increment score for correct answer
 
-    # Store question data temporarily (in session)
-    session['current_question'] = {
-        'question': question,
-        'correct_answer': correct_answer,
-        'options': options
-    }
+        # Get the next player for the next turn
+        current_player_index = (current_player_index + 1) % len(player_order)  # Loop through players
+        return redirect(url_for('ask_question', category=category, difficulty=difficulty))
 
-    return render_template('ask_question.html', question=question, options=options)
+    return render_template('ask_question.html', question=question, options=options, current_player=current_player, score=players_scores[current_player])
 
+def get_next_player(current_player):
+    player_list = list(players_scores.keys())
+    current_index = player_list.index(current_player)
+    next_index = (current_index + 1) % len(player_list)  # Loop back to first player after last player
+    return player_list[next_index]
 
 @app.route('/answer', methods=['POST'])
 def answer():
