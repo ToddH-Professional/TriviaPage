@@ -1,8 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 import requests
 import random
-import html
-import json
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # For session management
@@ -56,15 +54,37 @@ def ask_question():
     # Fetch a question based on the selected category and difficulty
     url = f"https://opentdb.com/api.php?amount=1&category={category}&difficulty={difficulty}&type=multiple"
     response = requests.get(url)
+    data = response.json()
+    if data.get('results'):
+        question_data = data['results'][0]
+    else:
+        return "No question found, try again!"
 
-    # Check if response is valid
-    if response.status_code != 200:
-        return "Error fetching questions. Please try again later."
+    if not question_data:
+        return "No question found, try again!"
 
-    # Output the raw JSON body for debugging
-    json_data = response.json()
-    return f"<pre>{json.dumps(json_data, indent=2)}</pre>"  # Pretty-print the JSON response
+    # Unescape the question and answers to clean them up
+    question = html.unescape(question_data['question'])
+    correct_answer = html.unescape(question_data['correct_answer'])
+    options = [html.unescape(answer) for answer in question_data['incorrect_answers']]
+    options.append(correct_answer)  # Add the correct answer
+    random.shuffle(options)  # Shuffle the options for randomness
 
+    # Initialize feedback variables
+    feedback_message = None
+    selected_answer = None
 
+    if request.method == 'POST':
+        selected_answer = request.form['answer']
+        if selected_answer == correct_answer:
+            feedback_message = "Correct! Moving to next question."
+        else:
+            feedback_message = "Wrong answer. Try again."
+
+    # Pass the question data, feedback, and answers to the template
+    return render_template('ask_question.html', question=question, options=options, 
+                           feedback_message=feedback_message, selected_answer=selected_answer, 
+                           correct_answer=correct_answer)
+                           
 if __name__ == '__main__':
     app.run(debug=True)
