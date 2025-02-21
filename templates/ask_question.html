@@ -6,20 +6,15 @@
     <title>Trivia Question</title>
 </head>
 <body>
-    <h1>{{ question }}</h1>
+    <h1>Question: {{ question }}</h1>
 
-    <form method="POST">
-        <p>Select an answer:</p>
+    <form method="POST" action="{{ url_for('answer') }}">
         {% for option in options %}
-            <label>
-                <input type="radio" name="answer" value="{{ option }}" required> {{ option }}
-            </label><br>
+            <input type="radio" id="{{ option }}" name="answer" value="{{ option }}">
+            <label for="{{ option }}">{{ option }}</label><br>
         {% endfor %}
-
+        
         <button type="submit">Submit Answer</button>
     </form>
-
-    <br>
-    <a href="{{ url_for('choose_category') }}">Choose another category</a>
 </body>
 </html>

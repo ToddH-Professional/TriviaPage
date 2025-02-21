@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trivia Result</title>
+</head>
+<body>
+    <h1>{{ result_message }}</h1>
+    <p>The correct answer was: <strong>{{ correct_answer }}</strong></p>
+
+    <!-- Go Back to Categories Button -->
+    <a href="{{ url_for('choose_category') }}">
+        <button type="button">Go Back to Categories</button>
+    </a>
+
+    <br><br>
+
+    <!-- Continue to Next Question Button -->
+    <form action="{{ url_for('ask_question') }}" method="get">
+        <button type="submit">Next Question</button>
+    </form>
+</body>
+</html>

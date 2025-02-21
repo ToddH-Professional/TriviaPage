@@ -1,6 +1,9 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 import requests
 import random
+import html
+import time
+import logging
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # For session management
@@ -46,45 +49,93 @@ def choose_category():
 
     return render_template('choose_category.html', categories=categories)  # Render the category selection page
 
+# Set up logging
+logging.basicConfig(level=logging.DEBUG)  # Adjust the level as necessary
+
+# Set up logging
+logging.basicConfig(level=logging.DEBUG)
+
 @app.route('/ask_question', methods=['GET', 'POST'])
 def ask_question():
-    category = request.args.get('category')
-    difficulty = request.args.get('difficulty')
+    category = request.args.get('category', '9')  # Default to General Knowledge if no category
+    difficulty = request.args.get('difficulty', 'easy')  # Default to easy if no difficulty
 
-    # Fetch a question based on the selected category and difficulty
-    url = f"https://opentdb.com/api.php?amount=1&category={category}&difficulty={difficulty}&type=multiple"
-    response = requests.get(url)
-    data = response.json()
-    if data.get('results'):
-        question_data = data['results'][0]
-    else:
-        return "No question found, try again!"
+    # Define retry parameters
+    max_retries = 5
+    retry_delay = 2  # Seconds to wait between retries
+    attempt = 0
+    question_data = None
+
+    # Try fetching the question with retries
+    while attempt < max_retries:
+        try:
+            url = f"https://opentdb.com/api.php?amount=1&category={category}&difficulty={difficulty}&type=multiple"
+            response = requests.get(url)
+
+            # Handle rate limiting (429 Too Many Requests)
+            if response.status_code == 429:
+                retry_after = response.headers.get('Retry-After', 5)  # Default to 5 seconds
+                logging.warning(f"Rate limit exceeded, retrying after {retry_after} seconds.")
+                time.sleep(int(retry_after))  # Wait before retrying
+                attempt += 1
+                continue
+
+            # Log the API response to see what data we're receiving
+            logging.debug(f"API Response: {response.json()}")
+
+            # If we get a valid response, break the retry loop
+            question_data = response.json().get('results', [])
+            if question_data:
+                question_data = question_data[0]  # Get the first question
+                break
+
+        except (requests.exceptions.RequestException, IndexError) as e:
+            attempt += 1
+            logging.error(f"Error fetching question, attempt {attempt} of {max_retries}: {e}")
+            time.sleep(retry_delay)  # Wait before retrying
 
     if not question_data:
-        return "No question found, try again!"
+        return "Sorry, there was an error fetching a question. Please try again later."
 
-    # Unescape the question and answers to clean them up
-    question = html.unescape(question_data['question'])
-    correct_answer = html.unescape(question_data['correct_answer'])
-    options = [html.unescape(answer) for answer in question_data['incorrect_answers']]
+    # Extract question details
+    question = question_data['question']
+    correct_answer = question_data['correct_answer']
+    options = question_data['incorrect_answers']
     options.append(correct_answer)  # Add the correct answer
-    random.shuffle(options)  # Shuffle the options for randomness
+    random.shuffle(options)  # Shuffle the options
 
-    # Initialize feedback variables
-    feedback_message = None
-    selected_answer = None
+    # Decode any HTML entities in the question text and answers
+    question = html.unescape(question)
+    options = [html.unescape(option) for option in options]
+    correct_answer = html.unescape(correct_answer)  # Also unescape the correct answer
 
-    if request.method == 'POST':
-        selected_answer = request.form['answer']
-        if selected_answer == correct_answer:
-            feedback_message = "Correct! Moving to next question."
-        else:
-            feedback_message = "Wrong answer. Try again."
+    # Store question data temporarily (in session)
+    session['current_question'] = {
+        'question': question,
+        'correct_answer': correct_answer,
+        'options': options
+    }
 
-    # Pass the question data, feedback, and answers to the template
-    return render_template('ask_question.html', question=question, options=options, 
-                           feedback_message=feedback_message, selected_answer=selected_answer, 
-                           correct_answer=correct_answer)
-                           
+    return render_template('ask_question.html', question=question, options=options)
+
+
+@app.route('/answer', methods=['POST'])
+def answer():
+    # Retrieve stored question data from session
+    current_question = session.get('current_question')
+    if not current_question:
+        return "No question found in session."
+
+    correct_answer = current_question['correct_answer']
+    selected_answer = request.form['answer']
+
+    if selected_answer == correct_answer:
+        result_message = "Congratulations, you got the answer right!"
+    else:
+        result_message = f"Too bad! The correct answer was: {correct_answer}"
+
+    # Show the result page
+    return render_template('result.html', result_message=result_message, correct_answer=correct_answer)
+
 if __name__ == '__main__':
     app.run(debug=True)
