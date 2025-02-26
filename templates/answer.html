@@ -13,7 +13,15 @@
     {% else %}
         <p style="color: red;">Incorrect. The correct answer was: <strong>{{ correct_answer }}</strong></p>
     {% endif %}
+    <h2>Scores:</h2>
+    <ul>
+        {% for player, score in session["players_scores"].items() %}
+            <li>{{ player }}: {{ score }}</li>
+        {% endfor %}
+    </ul>
+    <h3>{{ current_player }}'s Turn</h3>
 
+    <h4>Next question from the same category:</h4>
     <form action="{{ url_for('ask_question') }}" method="get" id="nextQuestionForm">
         <button type="submit" id="nextQuestionBtn">Next Question</button>
     </form>
@@ -22,11 +30,23 @@
             document.getElementById("nextQuestionBtn").disabled = true;
         });
     </script>
-    <h2>Scores:</h2>
-    <ul>
-        {% for player, score in session["players_scores"].items() %}
-            <li>{{ player }}: {{ score }}</li>
-        {% endfor %}
-    </ul>
+    <h4>Or Choose a new category:</h4>
+    <form action="{{ url_for('choose_category') }}" method="get" id="nextCategoryForm">
+        <button type="submit" id="nextCategoryBtn">Choose Category</button>
+    </form>
+    <script>
+        document.getElementById("nextCategoryForm").addEventListener("submit", function() {
+            document.getElementById("nextCategoryBtn").disabled = true;
+        });
+    </script>
+    <hr>
+    <form action="{{ url_for('index') }}" method="get" id="indexForm">
+        <button type="submit" id="indexBtn">Start Over</button>
+    </form>
+    <script>
+        document.getElementById("indexForm").addEventListener("submit", function() {
+            document.getElementById("indexBtn").disabled = true;
+        });
+    </script>
 </body>
 </html>

@@ -5,7 +5,7 @@
     <title>Choose Category</title>
 </head>
 <body>
-    <h1>Welcome, {{ current_player_name }}!</h1>
+    <h1>Welcome, {{ current_player }}!</h1>
     <form method="post" action="{{ url_for('choose_category') }}">
         <label for="category">Choose a category:</label>
         <select name="category" id="category" required>

@@ -20,7 +20,6 @@ current_player_index = 0
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    session.clear()
     if request.method == 'POST':
         num_players = int(request.form['num_players'])  # Get number of players from the form
         session['num_players'] = num_players  # Store the number of players in the session
@@ -101,12 +100,21 @@ def fetch_categories():
     
 @app.route('/choose_category', methods=['GET', 'POST'])
 def choose_category():
-    categories = fetch_categories()
+    categories = fetch_categories()       
+    # Checks if players exist or not
+    players = session.get('players', []) 
+    if not players:
+        return redirect(url_for('index'))
 
-    # Get the current player from session
-    current_player_index = session.get('current_player_index', 0)
-    players = session.get('players')
-    current_player_name = players[current_player_index]
+    # Create a player session for names and scores
+    initialize_player_session(players)
+
+    # Ensure current_player_index is within bounds
+    current_player_index = session.get('current_player_index', 0) % len(players)
+
+    # Set the current player
+    current_player = players[current_player_index]
+    session['current_player'] = current_player
 
     if request.method == 'POST':
         # Get selected category ID and difficulty
@@ -118,13 +126,12 @@ def choose_category():
 
     return render_template('choose_category.html', 
                            categories=categories, 
-                           current_player_name=current_player_name)
+                           current_player=current_player)
 
-@app.route('/ask_question', methods=['GET', 'POST'])
+@app.route('/ask_question', methods=['GET'])
 def ask_question():
-    players = session.get('players', [])
-    
     # Checks if players exist or not
+    players = session.get('players', []) 
     if not players:
         return redirect(url_for('index'))
 
@@ -194,8 +201,16 @@ def ask_question():
         return f"Error occurred: {str(e)}"
         
 
-@app.route('/answer', methods=['POST'])
+@app.route('/answer', methods=['GET', 'POST'])
 def answer():
+    # In case someone goes directly to the page
+    if request.method == ['GET'] :
+        return redirect(url_for('index'))
+    # Checks if players exist or not
+    players = session.get('players', []) 
+    if not players:
+        return redirect(url_for('index'))        
+
     # Save the selected answer into the session    
     selected_answer = request.form.get('answer')
     if not selected_answer:
@@ -213,11 +228,11 @@ def answer():
 
     correct_answer = question.get('correct_answer')    
     # Load player scores from session
-    players_scores = session.get("players_scores", {})
-    current_player = session.get("current_player")
+    players_scores = session.get("players_scores", {})    
 
     if selected_answer == correct_answer:
         # Update score if correct
+        current_player = session.get("current_player")
         players_scores[current_player] = players_scores.get(current_player, 0) + 1
 
     # Save updated scores back to session
@@ -227,10 +242,12 @@ def answer():
     session['current_player_index'] = (session.get('current_player_index', 0) + 1) % len(session['players'])
     session['current_player'] = session['players'][session['current_player_index']]
     session.modified = True  # Ensure session updates are saved
+    current_player = session.get("current_player") # Update this variable to offer next player options
 
     return render_template('answer.html', 
                            selected_answer=selected_answer, 
-                           correct_answer=correct_answer)
+                           correct_answer=correct_answer,
+                           current_player=current_player)
 
 if __name__ == '__main__':
     app.run(debug=True)
