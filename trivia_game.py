@@ -4,9 +4,14 @@ import random
 import html
 import time
 import logging
+import json  
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # For session management
+
+# Set up logging
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 # Initialize the players' scores and names
 players_scores = {}
@@ -14,112 +19,227 @@ player_order = []  # To store the order of players
 current_player_index = 0
 
 @app.route('/', methods=['GET', 'POST'])
-def start_game():
-    # If the form is submitted, we add the players and redirect to the category selection page
+def index():
+    session.clear()
     if request.method == 'POST':
-        num_players = int(request.form['num_players'])
-        for i in range(num_players):
-            player_name = request.form[f'player_name_{i+1}']
-            players.append(player_name)
-            scores[player_name] = 0  # Initialize their score
-        return redirect(url_for('choose_category'))  # Redirect to the category selection
+        num_players = int(request.form['num_players'])  # Get number of players from the form
+        session['num_players'] = num_players  # Store the number of players in the session
+        return redirect(url_for('get_names'))  # Redirect to the player names page
+    
+    return render_template('index.html')  # Render the index page if it's a GET request
 
-    return render_template('start_game.html')  # Render the start game page
 
 @app.route('/get_names', methods=['GET', 'POST'])
 def get_names():
-    num_players = session.get('num_players')  # Get the number of players from the session
+    # Get the number of players from the session
+    num_players = session.get('num_players')  
     if num_players is None:
-        return redirect(url_for('start_game'))  # If num_players is not found, go back to start
+        return redirect(url_for('index'))  # If no number of players is set, redirect to index
     
     if request.method == 'POST':
-        # Collect player names and store them in the session
+        # Collect player names from the form and store them in the session
         players = [request.form[f'player_{i}'] for i in range(1, num_players + 1)]
-        session['players'] = players  # Save the list of players' names in the session
-        return redirect(url_for('choose_category'))  # Redirect to the next step (choose category)
+        
+        # Initialize session with players and other session data
+        session['players'] = players  # Save player names in the session
+        session['current_player_index'] = 0  # Start with the first player
+        session['players_scores'] = {player: 0 for player in players}  # Initialize scores
+        
+        return redirect(url_for('choose_category'))  # Redirect to the category selection page
     
-    return render_template('get_names.html', num_players=num_players)  # Render the player names form
+    return render_template('get_names.html', num_players=num_players)  # Render the names form
 
+
+# Create a player session
+def initialize_player_session(players):
+    """Initialize the player session if it's not already set."""
+    if 'players' not in session:
+        session['players'] = players  # Store the players in the session
+
+    if 'current_player_index' not in session:
+        session['current_player_index'] = 0  # Initialize current player index if not set
+    
+    if 'players_scores' not in session:
+        session['players_scores'] = {player: 0 for player in players}  # Initialize player scores
+
+# fetch_categories with logging
+def fetch_categories():
+    url = 'https://opentdb.com/api_category.php'
+    logger.info(f"Requesting category data from {url}")
+    
+    try:
+        response = requests.get(url)
+        logger.info(f"Request: {response.request.method} {response.url} | Status_Code: {response.status_code} | Headers: {dict(response.request.headers)}")
+        # If rate limit is exceeded
+        if response.status_code == 429:
+            time.sleep(5)  # Wait for 5 seconds
+            # Retry the request after waiting
+            response = requests.get(url)
+            logger.info(f"Request: {response.request.method} {response.url} | Status_Code: {response.status_code} | Headers: {dict(response.request.headers)}")
+
+        # If successful, process the category data
+        if response.status_code == 200:
+            logger.info(f"Request: {response.request.method} {response.url} | Status_Code: {response.status_code} | Headers: {dict(response.request.headers)}")
+            data = response.json()
+            categories = data.get('trivia_categories', [])
+            if categories:
+                logger.info(f"Received {len(categories)} categories.")
+                desired_categories = ['General Knowledge', 'Sports', 'Geography', 'History', 'Art', 'Science & Nature']
+                categories = [cat for cat in categories if cat['name'] in desired_categories]
+                return categories
+            else:
+                logger.error("No categories found in the response.")
+                return []
+
+        else:
+            logger.error(f"Failed to fetch categories. Status code: {response.status_code}")
+            return []
+
+    except Exception as e:
+        logger.error(f"Error fetching categories: {str(e)}")
+        return []
+    
 @app.route('/choose_category', methods=['GET', 'POST'])
 def choose_category():
-    # Simulate category selection (In real app, you'd fetch categories from an API)
-    categories = ['General Knowledge', 'Science', 'History', 'Sports']
+    categories = fetch_categories()
 
-    # Get the current player’s turn
+    # Get the current player from session
+    current_player_index = session.get('current_player_index', 0)
+    players = session.get('players')
     current_player_name = players[current_player_index]
 
     if request.method == 'POST':
-        # Get selected category and difficulty
-        chosen_category = request.form['category']
+        # Get selected category ID and difficulty
+        chosen_category_id = request.form['category']
         difficulty = request.form['difficulty']
-        
-        # Redirect to the ask_question page with the category and difficulty selected
-        return redirect(url_for('ask_question', category=chosen_category, difficulty=difficulty))
 
-    return render_template('choose_category.html', categories=categories, current_player_name=current_player_name)
+        # Redirect to the ask_question page with the selected category ID and difficulty
+        return redirect(url_for('ask_question', category=chosen_category_id, difficulty=difficulty))
 
-# Set up logging
-logging.basicConfig(level=logging.DEBUG)  # Adjust the level as necessary
+    return render_template('choose_category.html', 
+                           categories=categories, 
+                           current_player_name=current_player_name)
 
 @app.route('/ask_question', methods=['GET', 'POST'])
 def ask_question():
-    global current_player_index
+    # Logging the session data for debugging
+    logger.info(f"First run for Session Data: {json.dumps(session, indent=4)}")
 
-    category = request.args.get('category')
-    difficulty = request.args.get('difficulty')
-
-    current_player = player_order[current_player_index]
+    players = session.get('players', [])
     
-    # Fetch a question based on the selected category and difficulty
-    url = f"https://opentdb.com/api.php?amount=1&category={category}&difficulty={difficulty}&type=multiple"
-    response = requests.get(url)
-    question_data = response.json().get('results', [])[0]
+    # Checks if players exist or not
+    if not players:
+        return redirect(url_for('index'))
 
-    if not question_data:
-        return "No question found, try again!"
+    # Create a session to hold data between pages
+    initialize_player_session(players)
+    # Ensure current_player_index is within bounds
+    current_player_index = session.get('current_player_index', 0) % len(players)
 
-    # Unescape the question and answer options
-    question = html.unescape(question_data['question'])
-    correct_answer = html.unescape(question_data['correct_answer'])
-    options = [html.unescape(answer) for answer in question_data['incorrect_answers']]
-    options.append(correct_answer)  # Add the correct answer
-    random.shuffle(options)  # Shuffle the options
+    # Set the current player
+    current_player = players[current_player_index]
+    session['current_player'] = current_player
 
-    # Handle POST request (when user submits an answer)
-    if request.method == 'POST':
-        selected_answer = request.form['answer']
-        if selected_answer == correct_answer:
-            players_scores[current_player] += 1  # Increment score for correct answer
+    # Ensure Flask registers session changes
+    session.modified = True 
 
-        # Get the next player for the next turn
-        current_player_index = (current_player_index + 1) % len(player_order)  # Loop through players
-        return redirect(url_for('ask_question', category=category, difficulty=difficulty))
+    logger.info(f"Current Player: {current_player} (Index: {current_player_index})")
 
-    return render_template('ask_question.html', question=question, options=options, current_player=current_player, score=players_scores[current_player])
+    # Try to get category and difficulty from request args first, fallback to session
+    category = request.args.get('category') or session.get('category')
+    difficulty = request.args.get('difficulty') or session.get('difficulty')
 
-def get_next_player(current_player):
-    player_list = list(players_scores.keys())
-    current_index = player_list.index(current_player)
-    next_index = (current_index + 1) % len(player_list)  # Loop back to first player after last player
-    return player_list[next_index]
+    if not category or not difficulty:
+        logger.error("Category or difficulty is missing! Redirecting to category selection.")
+        return redirect(url_for('choose_category'))  # Redirect if missing
+
+    # Saving just about everything to the session.  I'm not sure what all will be used
+    session['category'] = category 
+    session['difficulty'] = difficulty
+
+    url = f"https://opentdb.com/api.php?amount=1&category={category}&difficulty={difficulty}&type=multiple"   
+
+    # Pulls the question and answers
+    try:
+        response = requests.get(url)
+        # Log the request details after the GET request
+        logger.info(f"Request: {response.request.method} {response.url} | Status_Code: {response.status_code} | Headers: {dict(response.request.headers)}")
+        # For timed retries.  When it returns 429 wait 5 seconds which is their rate limit
+        if response.status_code == 429:
+            time.sleep(5)
+            response = requests.get(url)
+            # Log the request details for the retry
+            logger.info(f"Request: {response.request.method} {response.url} | Status_Code: {response.status_code}")
+        # Here is what happens after success
+        if response.status_code == 200:
+            question_data = response.json().get('results', [])[0]
+            # Unescape text
+            question_data['question'] = html.unescape(question_data['question'])
+            question_data['correct_answer'] = html.unescape(question_data['correct_answer']) 
+            question_data['incorrect_answers'] = [html.unescape(answer) for answer in question_data['incorrect_answers']] 
+            # Answers get saved
+            answers = question_data['incorrect_answers'] + [question_data['correct_answer']]
+            random.shuffle(answers)  # Shuffle so the correct answer isn't always in the same spot              
+            #Save the question_data as question.  
+            session['question'] = question_data  # Save the question for the next page      
+                 
+        else:
+            logger.error(f"Error fetching question. Status code: {response.status_code}")
+            return "Error occurred while fetching the question."    
+        
+        # Output the session data for debugging
+        logger.info(f"Final Run for Session Data: {json.dumps(session, indent=4)}")
+        return render_template('ask_question.html', 
+                           question=question_data['question'], 
+                           answers=answers, 
+                           current_player=current_player)
+    
+    except Exception as e:
+        logger.error(f"Error fetching question: {str(e)}")
+        return f"Error occurred: {str(e)}"
+        
 
 @app.route('/answer', methods=['POST'])
 def answer():
-    # Retrieve stored question data from session
-    current_question = session.get('current_question')
-    if not current_question:
-        return "No question found in session."
+    # Save the selected answer into the session    
+    selected_answer = request.form.get('answer')
+    if not selected_answer:
+        logger.error("No answer selected!")
+        return redirect(url_for('ask_question'))  # If no answer is selected, redirect back
+    
+    session['selected_answer'] = selected_answer  # Save the selected answer to session 
 
-    correct_answer = current_question['correct_answer']
-    selected_answer = request.form['answer']
+    # Get the correct answer from session
+    logger.info(f"Session data at /answer: {json.dumps(session, indent=4)}")
+    question = session.get('question')
+    if not question:
+        logger.error("No question found in session!")
+        return redirect(url_for('ask_question'))  # Redirect to fetch a new question
+
+    correct_answer = question.get('correct_answer')
+
+    logger.info(f"Answer Route Session Data: {json.dumps(session, indent=4)}")
+    # Load player scores from session
+    players_scores = session.get("players_scores", {})
+    current_player = session.get("current_player")
 
     if selected_answer == correct_answer:
-        result_message = "Congratulations, you got the answer right!"
-    else:
-        result_message = f"Too bad! The correct answer was: {correct_answer}"
+        # Update score if correct
+        players_scores[current_player] = players_scores.get(current_player, 0) + 1
 
-    # Show the result page
-    return render_template('result.html', result_message=result_message, correct_answer=correct_answer)
+    # Save updated scores back to session
+    session["players_scores"] = players_scores
+
+    # Move to next player
+    session['current_player_index'] = (current_player_index + 1) % len(session['players'])
+    session.modified = True  # Ensure changes are saved
+
+    logger.info(f"Next Player Index: {session['current_player_index']}")
+
+    return render_template('answer.html', 
+                           selected_answer=selected_answer, 
+                           correct_answer=correct_answer)
+
 
 if __name__ == '__main__':
     app.run(debug=True)

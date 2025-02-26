@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Answer</title>
+</head>
+<body>
+    <h1>Answer Result</h1>
+
+    {% if request.form['answer'] == correct_answer %}
+        <p style="color: green;">Correct! 🎉</p>
+    {% else %}
+        <p style="color: red;">Incorrect. The correct answer was: <strong>{{ correct_answer }}</strong></p>
+    {% endif %}
+
+    <form action="{{ url_for('ask_question') }}" method="get">
+        <button type="submit">Next Question</button>
+    </form>
+    <h2>Scores:</h2>
+    <ul>
+        {% for player, score in session["players_scores"].items() %}
+            <li>{{ player }}: {{ score }}</li>
+        {% endfor %}
+    </ul>
+    <script>
+        document.getElementById("answerForm").addEventListener("submit", function() {
+            document.getElementById("submitBtn").disabled = true;
+        });
+    </script>
+</body>
+</html>

@@ -1,4 +1,3 @@
-<!-- get_names.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,13 +7,12 @@
 </head>
 <body>
     <h1>Enter Player Names</h1>
-    <form method="POST">
+    <form action="/get_names" method="POST">
         {% for i in range(1, num_players + 1) %}
-            <label for="player_{{ i }}">Player {{ i }} Name:</label>
-            <input type="text" id="player_{{ i }}" name="player_{{ i }}" required>
-            <br>
+            <label for="player_{{ i }}">Player {{ i }}'s name:</label>
+            <input type="text" id="player_{{ i }}" name="player_{{ i }}" required><br>
         {% endfor %}
-        <button type="submit">Submit Names</button>
+        <button type="submit">Next</button>
     </form>
 </body>
 </html>

@@ -3,30 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trivia Question</title>
+    <title>Ask Question</title>
 </head>
 <body>
-    <h1>Question: {{ question }}</h1>
+    <h1>{{ current_player }}'s Turn</h1>
+    <h2>{{ question }}</h2>
 
-    <form method="POST" action="{{ url_for('answer') }}">
-        {% for option in options %}
-            <input type="radio" id="{{ option }}" name="answer" value="{{ option }}">
-            <label for="{{ option }}">{{ option }}</label><br>
+    <form method="POST" action="/answer">
+        {% for answer in answers %}
+            <input type="radio" name="answer" value="{{ answer }}" required> {{ answer }}<br>
         {% endfor %}
-        
         <button type="submit">Submit Answer</button>
     </form>
-    <h2>It's {{ current_player }}'s turn!</h2>
-    
-    <p>Current Score: {{ score }}</p>
-
-    <form method="post">
-        <h3>{{ question }}</h3>
-        {% for option in options %}
-            <input type="radio" id="{{ option }}" name="answer" value="{{ option }}">
-            <label for="{{ option }}">{{ option }}</label><br>
-        {% endfor %}
-        <button type="submit">Submit Answer</button>
-</form>
+    <script>
+        document.getElementById("answerForm").addEventListener("submit", function() {
+            document.getElementById("submitBtn").disabled = true;
+        });
+    </script>
 </body>
 </html>

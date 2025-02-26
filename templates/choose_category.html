@@ -2,30 +2,26 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Choose Category</title>
 </head>
 <body>
-    <h1>Welcome {{ current_player_name }}! It's your turn.</h1>
-    <form method="POST">
+    <h1>Welcome, {{ current_player_name }}!</h1>
+    <form method="post" action="{{ url_for('choose_category') }}">
         <label for="category">Choose a category:</label>
-        <select name="category" required>
+        <select name="category" id="category" required>
             {% for category in categories %}
-                <option value="{{ category }}">{{ category }}</option>
+                <option value="{{ category.id }}">{{ category.name }}</option>
             {% endfor %}
         </select>
-
         <br>
-
-        <label for="difficulty">Choose a difficulty:</label>
-        <select name="difficulty" required>
+        <label for="difficulty">Choose difficulty:</label>
+        <select name="difficulty" id="difficulty" required>
             <option value="easy">Easy</option>
             <option value="medium">Medium</option>
             <option value="hard">Hard</option>
         </select>
-
         <br>
-        <button type="submit">Submit</button>
+        <button type="submit">Start Quiz</button>
     </form>
 </body>
 </html>
