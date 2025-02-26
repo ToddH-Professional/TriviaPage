@@ -1,10 +1,15 @@
 from flask import Flask, render_template, request, redirect, url_for, session
+from authlib.integrations.flask_client import OAuth
+from dotenv import load_dotenv
 import requests
 import random
-import html
 import time
 import logging
 import json
+import os
+
+# Load environment variables from .env file
+load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # For session management
@@ -18,16 +23,47 @@ players_scores = {}
 player_order = []  # To store the order of players
 current_player_index = 0
 
+# The index page
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    username = session.get('username')
     if request.method == 'POST':
         num_players = int(request.form['num_players'])  # Get number of players from the form
         session['num_players'] = num_players  # Store the number of players in the session
         return redirect(url_for('get_names'))  # Redirect to the player names page
     
-    return render_template('index.html')  # Render the index page if it's a GET request
+    return render_template('index.html', username=username)  # Render the index page if it's a GET request
 
+# For google oauth
+oauth = OAuth(app)
+google = oauth.register(
+    name='google',
+    client_id=os.getenv('GOOGLE_CLIENT_ID'),
+    client_secret=os.getenv('GOOGLE_CLIENT_SECRET'),
+    authorize_url='https://accounts.google.com/o/oauth2/auth',
+    authorize_params=None,
+    access_token_url='https://accounts.google.com/o/oauth2/token',
+    access_token_params=None,
+    refresh_token_url=None,
+    redirect_uri=None,
+    client_kwargs={'scope': 'openid profile email'},
+)
 
+@app.route('/login')
+def login():
+    redirect_uri = url_for('auth', _external=True)  # Dynamically generate redirect URI
+    return google.authorize_redirect(redirect_uri)
+
+@app.route('/auth')
+def auth():
+    token = google.authorize_access_token()
+    user = google.parse_id_token(token)
+    # Redirect to a new page after successful login
+    # Store the user's name in the session
+    session['username'] = user["name"]
+    return redirect(url_for('index'))
+
+# Get the names of players
 @app.route('/get_names', methods=['GET', 'POST'])
 def get_names():
     # Get the number of players from the session

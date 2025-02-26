@@ -7,6 +7,14 @@
 </head>
 <body>
     <h1>Welcome to the Trivia Game!</h1>
+    {% if username %}
+        <h2>Welcome, {{ username }}!</h2>
+        <a href="{{ url_for('logout') }}">Logout</a>
+    {% else %}
+        <form action="{{ url_for('login') }}" method="get">
+            <button type="submit" class="btn btn-primary">Login with Google</button>
+        </form>
+    {% endif %}
     <form action="/" method="POST">
         <label for="num_players">How many players want to play?</label>
         <input type="number" id="num_players" name="num_players" min="1" required>
