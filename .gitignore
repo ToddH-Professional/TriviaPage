@@ -1,6 +1,3 @@
 # Ignore .env files
 .env
 
-# Ignore docker
-.dockerignore
-dockerfile
