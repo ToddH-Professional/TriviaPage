@@ -9,15 +9,15 @@
     <h1>{{ current_player }}'s Turn</h1>
     <h2>{{ question }}</h2>
 
-    <form method="POST" action="/answer">
+    <form method="POST" action="/answer" id="nextQuestionForm">
         {% for answer in answers %}
             <input type="radio" name="answer" value="{{ answer }}" required> {{ answer }}<br>
         {% endfor %}
-        <button type="submit">Submit Answer</button>
+        <button type="submit" id="nextQuestionBtn">Submit Answer</button>
     </form>
     <script>
-        document.getElementById("answerForm").addEventListener("submit", function() {
-            document.getElementById("submitBtn").disabled = true;
+        document.getElementById("nextQuestionForm").addEventListener("submit", function() {
+            document.getElementById("nextQuestionBtn").disabled = true;
         });
     </script>
 </body>

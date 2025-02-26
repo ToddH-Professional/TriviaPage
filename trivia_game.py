@@ -4,7 +4,7 @@ import random
 import html
 import time
 import logging
-import json  
+import json
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # For session management
@@ -43,7 +43,7 @@ def get_names():
         # Initialize session with players and other session data
         session['players'] = players  # Save player names in the session
         session['current_player_index'] = 0  # Start with the first player
-        session['players_scores'] = {player: 0 for player in players}  # Initialize scores
+        session['players_scores'] = {player: 0 for player in players} # Needs python 3.7 or higher.  Otherwise, make an OrderedDict
         
         return redirect(url_for('choose_category'))  # Redirect to the category selection page
     
@@ -122,9 +122,6 @@ def choose_category():
 
 @app.route('/ask_question', methods=['GET', 'POST'])
 def ask_question():
-    # Logging the session data for debugging
-    logger.info(f"First run for Session Data: {json.dumps(session, indent=4)}")
-
     players = session.get('players', [])
     
     # Checks if players exist or not
@@ -186,9 +183,7 @@ def ask_question():
         else:
             logger.error(f"Error fetching question. Status code: {response.status_code}")
             return "Error occurred while fetching the question."    
-        
-        # Output the session data for debugging
-        logger.info(f"Final Run for Session Data: {json.dumps(session, indent=4)}")
+
         return render_template('ask_question.html', 
                            question=question_data['question'], 
                            answers=answers, 
@@ -216,9 +211,7 @@ def answer():
         logger.error("No question found in session!")
         return redirect(url_for('ask_question'))  # Redirect to fetch a new question
 
-    correct_answer = question.get('correct_answer')
-
-    logger.info(f"Answer Route Session Data: {json.dumps(session, indent=4)}")
+    correct_answer = question.get('correct_answer')    
     # Load player scores from session
     players_scores = session.get("players_scores", {})
     current_player = session.get("current_player")
@@ -228,18 +221,16 @@ def answer():
         players_scores[current_player] = players_scores.get(current_player, 0) + 1
 
     # Save updated scores back to session
-    session["players_scores"] = players_scores
+    session["players_scores"] = {k: players_scores[k] for k in session['players']} 
 
-    # Move to next player
-    session['current_player_index'] = (current_player_index + 1) % len(session['players'])
-    session.modified = True  # Ensure changes are saved
-
-    logger.info(f"Next Player Index: {session['current_player_index']}")
+    # Move to next player and reset automatically when reaching the end
+    session['current_player_index'] = (session.get('current_player_index', 0) + 1) % len(session['players'])
+    session['current_player'] = session['players'][session['current_player_index']]
+    session.modified = True  # Ensure session updates are saved
 
     return render_template('answer.html', 
                            selected_answer=selected_answer, 
                            correct_answer=correct_answer)
-
 
 if __name__ == '__main__':
     app.run(debug=True)

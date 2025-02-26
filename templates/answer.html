@@ -14,19 +14,19 @@
         <p style="color: red;">Incorrect. The correct answer was: <strong>{{ correct_answer }}</strong></p>
     {% endif %}
 
-    <form action="{{ url_for('ask_question') }}" method="get">
-        <button type="submit">Next Question</button>
+    <form action="{{ url_for('ask_question') }}" method="get" id="nextQuestionForm">
+        <button type="submit" id="nextQuestionBtn">Next Question</button>
     </form>
+    <script>
+        document.getElementById("nextQuestionForm").addEventListener("submit", function() {
+            document.getElementById("nextQuestionBtn").disabled = true;
+        });
+    </script>
     <h2>Scores:</h2>
     <ul>
         {% for player, score in session["players_scores"].items() %}
             <li>{{ player }}: {{ score }}</li>
         {% endfor %}
     </ul>
-    <script>
-        document.getElementById("answerForm").addEventListener("submit", function() {
-            document.getElementById("submitBtn").disabled = true;
-        });
-    </script>
 </body>
 </html>
