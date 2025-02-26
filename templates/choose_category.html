@@ -8,9 +8,9 @@
     <h1>Welcome, {{ current_player }}!</h1>
     <form method="post" action="{{ url_for('choose_category') }}">
         <label for="category">Choose a category:</label>
-        <select name="category" id="category" required>
+        <select id="category" name="category" required>
             {% for category in categories %}
-                <option value="{{ category.id }}">{{ category.name }}</option>
+                <option value="{{ category.name }}">{{ category.displayname }}</option>
             {% endfor %}
         </select>
         <br>
@@ -21,7 +21,7 @@
             <option value="hard">Hard</option>
         </select>
         <br>
-        <button type="submit">Start Quiz</button>
+        <button type="submit">Next</button>
     </form>
 </body>
 </html>

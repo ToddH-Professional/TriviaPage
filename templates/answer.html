@@ -8,10 +8,10 @@
 <body>
     <h1>Answer Result</h1>
 
-    {% if request.form['answer'] == correct_answer %}
+    {% if request.form['answer'] == correctAnswer %}
         <p style="color: green;">Correct! 🎉</p>
     {% else %}
-        <p style="color: red;">Incorrect. The correct answer was: <strong>{{ correct_answer }}</strong></p>
+        <p style="color: red;">Incorrect. The correct answer was: <strong>{{ correctAnswer }}</strong></p>
     {% endif %}
     <h2>Scores:</h2>
     <ul>

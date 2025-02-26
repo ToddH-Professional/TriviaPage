@@ -61,46 +61,26 @@ def initialize_player_session(players):
     if 'players_scores' not in session:
         session['players_scores'] = {player: 0 for player in players}  # Initialize player scores
 
-# fetch_categories with logging
-def fetch_categories():
-    url = 'https://opentdb.com/api_category.php'
-    logger.info(f"Requesting category data from {url}")
-    
-    try:
-        response = requests.get(url)
-        logger.info(f"Request: {response.request.method} {response.url} | Status_Code: {response.status_code} | Headers: {dict(response.request.headers)}")
-        # If rate limit is exceeded
-        if response.status_code == 429:
-            time.sleep(5)  # Wait for 5 seconds
-            # Retry the request after waiting
-            response = requests.get(url)
-            logger.info(f"Request: {response.request.method} {response.url} | Status_Code: {response.status_code} | Headers: {dict(response.request.headers)}")
-
-        # If successful, process the category data
-        if response.status_code == 200:
-            logger.info(f"Request: {response.request.method} {response.url} | Status_Code: {response.status_code} | Headers: {dict(response.request.headers)}")
-            data = response.json()
-            categories = data.get('trivia_categories', [])
-            if categories:
-                logger.info(f"Received {len(categories)} categories.")
-                desired_categories = ['General Knowledge', 'Sports', 'Geography', 'History', 'Art', 'Science & Nature']
-                categories = [cat for cat in categories if cat['name'] in desired_categories]
-                return categories
-            else:
-                logger.error("No categories found in the response.")
-                return []
-
-        else:
-            logger.error(f"Failed to fetch categories. Status code: {response.status_code}")
-            return []
-
-    except Exception as e:
-        logger.error(f"Error fetching categories: {str(e)}")
-        return []
-    
 @app.route('/choose_category', methods=['GET', 'POST'])
 def choose_category():
-    categories = fetch_categories()       
+
+    def generate_categories(*category_tuples):
+    # Generate list of dictionaries from tuples.  The name is needed for the API call later
+        return [{"name": name, "displayname": display} for name, display in category_tuples]
+
+    categories = generate_categories(
+    ("music", "Music"),
+    ("sport_and_leisure", "Sport and Leisure"),
+    ("film_and_tv", "Film and TV"),
+    ("arts_and_literature", "Arts and Literature"),
+    ("history", "History"),
+    ("society_and_culture", "Society and Culture"),
+    ("science", "Science"),
+    ("geography", "Geography"),
+    ("food_and_drink", "Food and Drink"),
+    ("general_knowledge", "General Knowledge")
+    )
+
     # Checks if players exist or not
     players = session.get('players', []) 
     if not players:
@@ -125,8 +105,8 @@ def choose_category():
         return redirect(url_for('ask_question', category=chosen_category_id, difficulty=difficulty))
 
     return render_template('choose_category.html', 
-                           categories=categories, 
-                           current_player=current_player)
+                            categories=categories, 
+                            current_player=current_player)
 
 @app.route('/ask_question', methods=['GET'])
 def ask_question():
@@ -161,13 +141,13 @@ def ask_question():
     session['category'] = category 
     session['difficulty'] = difficulty
 
-    url = f"https://opentdb.com/api.php?amount=1&category={category}&difficulty={difficulty}&type=multiple"   
+    url = f"https://the-trivia-api.com/v2/questions?categories={category}&difficulty={difficulty}"  
 
     # Pulls the question and answers
     try:
         response = requests.get(url)
-        # Log the request details after the GET request
-        logger.info(f"Request: {response.request.method} {response.url} | Status_Code: {response.status_code} | Headers: {dict(response.request.headers)}")
+        # Logging the json output
+        logger.info(f"Request: {response.request.method} {response.url} | Status_Code: {response.status_code} | Response Body: {json.dumps(response.json(), indent=2)}")
         # For timed retries.  When it returns 429 wait 5 seconds which is their rate limit
         if response.status_code == 429:
             time.sleep(5)
@@ -176,14 +156,13 @@ def ask_question():
             logger.info(f"Request: {response.request.method} {response.url} | Status_Code: {response.status_code}")
         # Here is what happens after success
         if response.status_code == 200:
-            question_data = response.json().get('results', [])[0]
-            # Unescape text
-            question_data['question'] = html.unescape(question_data['question'])
-            question_data['correct_answer'] = html.unescape(question_data['correct_answer']) 
-            question_data['incorrect_answers'] = [html.unescape(answer) for answer in question_data['incorrect_answers']] 
+            logger.info(f"Request: {response.request.method} {response.url} | Status_Code: {response.status_code}")
+            question_data = response.json()[0]
+            
             # Answers get saved
-            answers = question_data['incorrect_answers'] + [question_data['correct_answer']]
-            random.shuffle(answers)  # Shuffle so the correct answer isn't always in the same spot              
+            answers = question_data['incorrectAnswers'] + [question_data['correctAnswer']]
+            random.shuffle(answers)  # Shuffle so the correct answer isn't always in the same spot 
+
             #Save the question_data as question.  
             session['question'] = question_data  # Save the question for the next page      
                  
@@ -226,11 +205,11 @@ def answer():
         logger.error("No question found in session!")
         return redirect(url_for('ask_question'))  # Redirect to fetch a new question
 
-    correct_answer = question.get('correct_answer')    
+    correctAnswer = question.get('correctAnswer')    
     # Load player scores from session
     players_scores = session.get("players_scores", {})    
 
-    if selected_answer == correct_answer:
+    if selected_answer == correctAnswer:
         # Update score if correct
         current_player = session.get("current_player")
         players_scores[current_player] = players_scores.get(current_player, 0) + 1
@@ -246,7 +225,7 @@ def answer():
 
     return render_template('answer.html', 
                            selected_answer=selected_answer, 
-                           correct_answer=correct_answer,
+                           correctAnswer=correctAnswer,
                            current_player=current_player)
 
 if __name__ == '__main__':
