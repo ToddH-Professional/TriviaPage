@@ -1,12 +1,14 @@
 from flask import Flask, render_template, request, redirect, url_for, session
-from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
+from google_auth_oauthlib.flow import Flow
+from google.auth.transport.requests import Request
 import requests
 import random
 import time
 import logging
 import json
 import os
+
 
 # Load environment variables from .env file
 load_dotenv()
@@ -35,32 +37,60 @@ def index():
     return render_template('index.html', username=username)  # Render the index page if it's a GET request
 
 # For google oauth
-oauth = OAuth(app)
-google = oauth.register(
-    name='google',
-    client_id=os.getenv('GOOGLE_CLIENT_ID'),
-    client_secret=os.getenv('GOOGLE_CLIENT_SECRET'),
-    authorize_url='https://accounts.google.com/o/oauth2/auth',
-    authorize_params=None,
-    access_token_url='https://accounts.google.com/o/oauth2/token',
-    access_token_params=None,
-    refresh_token_url=None,
-    redirect_uri=None,
-    client_kwargs={'scope': 'openid profile email'},
+# Determine the redirect URI based on environment
+if os.getenv('RAILWAY_PUBLIC_DOMAIN'):
+    redirect_uri = os.getenv('RAILWAY_PUBLIC_DOMAIN') + '/callback'
+else:
+    # Default for local development
+    redirect_uri = 'https://6b48-68-97-137-104.ngrok-free.app/callback'
+
+client_id = os.getenv('GOOGLE_CLIENT_ID')
+client_secret = os.getenv('GOOGLE_CLIENT_SECRET')
+
+flow = Flow.from_client_config(
+    {
+        "web": {
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+            "token_uri": "https://accounts.google.com/o/oauth2/token",
+        }
+    },
+    scopes=["https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email"],
+    redirect_uri=redirect_uri
 )
 
 @app.route('/login')
-def login():
-    redirect_uri = url_for('auth', _external=True)  # Dynamically generate redirect URI
-    return google.authorize_redirect(redirect_uri)
+def login():  
+    logger.info(f"Redirect URI before flow: {redirect_uri}")    
+    # Pass the redirect_uri dynamically when creating the flow, not here
+    authorization_url, state = flow.authorization_url(
+        access_type='offline',
+        include_granted_scopes='true'
+    )
+    # Logging flow details correctly
+    logger.info("OAuth flow details:")
+    logger.info(f"Client ID: {flow.client_config.get('client_id')}")
+    logger.info(f"Redirect URI: {flow.redirect_uri}")
+    logger.info(f"Authorization URL: {authorization_url}")  
+    logger.info(f"Scopes: {flow.oauth2session.scope}")  
+    session['state'] = state
+    return redirect(authorization_url)
 
-@app.route('/auth')
-def auth():
-    token = google.authorize_access_token()
-    user = google.parse_id_token(token)
-    # Redirect to a new page after successful login
-    # Store the user's name in the session
-    session['username'] = user["name"]
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('index'))
+
+@app.route('/callback')
+def callback():
+    
+    logger.info(f"Callback request URL: {request.url}")
+    flow.fetch_token(authorization_response=request.url)
+    logger.info(f"Fetch Token: {flow.fetch_token}")
+    if not session['state'] == request.args['state']:
+        return 'State mismatch error', 400
+
     return redirect(url_for('index'))
 
 # Get the names of players
@@ -235,7 +265,7 @@ def answer():
     session['selected_answer'] = selected_answer  # Save the selected answer to session 
 
     # Get the correct answer from session
-    logger.info(f"Session data at /answer: {json.dumps(session, indent=4)}")
+    logger.info(f"OAuth flow details: {json.dumps(flow, indent=4)}")
     question = session.get('question')
     if not question:
         logger.error("No question found in session!")

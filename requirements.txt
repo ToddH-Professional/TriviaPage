@@ -1,5 +1,7 @@
 requests
 flask
 gunicorn
-authlib
 python-dotenv
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
