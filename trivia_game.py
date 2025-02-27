@@ -39,7 +39,7 @@ def index():
 # For google oauth
 # Determine the redirect URI based on environment
 if os.getenv('RAILWAY_PUBLIC_DOMAIN'):
-    redirect_uri = os.getenv('RAILWAY_PUBLIC_DOMAIN') + '/callback'
+    redirect_uri = 'https://' + os.getenv('RAILWAY_PUBLIC_DOMAIN') + '/callback'
 else:
     # Default for local development
     redirect_uri = 'https://6b48-68-97-137-104.ngrok-free.app/callback'
@@ -83,8 +83,7 @@ def logout():
     return redirect(url_for('index'))
 
 @app.route('/callback')
-def callback():
-    
+def callback():    
     logger.info(f"Callback request URL: {request.url}")
     flow.fetch_token(authorization_response=request.url)
     logger.info(f"Fetch Token: {flow.fetch_token}")
