@@ -1,7 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 from dotenv import load_dotenv
 from google_auth_oauthlib.flow import Flow
-from flask_session import session
 import requests
 import random
 import time
@@ -15,8 +14,6 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('FLASK_SECRET_KEY')
-app.config['SESSION_TYPE'] = 'filesystem'
-session(app)
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
