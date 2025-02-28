@@ -17,4 +17,4 @@ COPY . .
 EXPOSE 5000
 
 # Set the command to run the app
-CMD ["gunicorn", "-b", "0.0.0.0:8080", "--log-level", "debug", "trivia_game:app"]
+CMD ["gunicorn", "-b", "0.0.0.0:8080", "-t", "30", "--log-level", "debug", "trivia_game:app"]

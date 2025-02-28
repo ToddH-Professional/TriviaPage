@@ -3,5 +3,6 @@ flask
 gunicorn
 python-dotenv
 google-auth
+flask-session
 google-auth-oauthlib
 google-auth-httplib2
