@@ -74,17 +74,12 @@ def logout():
 @app.route('/callback')
 def callback():
     auth_response = request.url.replace("http://", "https://")    
-    logger.info(f"Auth response URL: {auth_response}")
-    # Ensure 'flow' is correctly recreated
-    flow = Flow.from_client_secrets_file(
-        client_secret_file,
-        scopes=["openid https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile"],  # Define the scope you need
-        redirect_uri=redirect_uri
-    )
+    logger.info(f"Auth response URL: {auth_response}")    
+
     #logger.info(f"Request state: {request.args.get('state')}")
     token = flow.fetch_token(authorization_response=auth_response)
     # Get the user's profile information
-    credentials = flow.credentials
+    #credentials = flow.credentials
     #logger.info(f"Logged in as: {credentials.id_token.get('email')}")    
     # Ensure state matches to prevent CSRF attacks
     #if session.get('state') != request.args.get('state'):
