@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 from dotenv import load_dotenv
+from google.cloud import secretmanager
 from google_auth_oauthlib.flow import Flow
 import requests
 import random
@@ -7,7 +8,7 @@ import time
 import logging
 import json
 import os
-import base64
+
 
 
 # Load environment variables from .env file
@@ -15,12 +16,6 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('FLASK_SECRET_KEY')
-
-import os
-import json
-import base64
-
-
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -50,20 +45,28 @@ else:
     # Default for local development
     redirect_uri = 'https://8c86-68-97-137-104.ngrok-free.app/callback'
 
+# Determine which credentials file to use
 if os.getenv('GOOGLE_APPLICATION_CREDENTIALS'):
-    # Save JSON key to a file
-    client_secret_file = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+    # In Railway or Cloud: Save JSON key from env variable
+    credentials_json = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+
+    # Save to a temporary file
+    temp_credentials_path = "/tmp/google_credentials.json"
+    with open(temp_credentials_path, "w") as f:
+        f.write(credentials_json)
+
+    client_secret_file = temp_credentials_path
 else:
-    # Use the local client_secret.json file during local development
-    client_secret_file = os.getenv('GOOGLE_CLIENT_SECRET_PATH')
+    # Local development
+    client_secret_file = os.getenv('GOOGLE_CLIENT_SECRET_PATH', "client_secret.json")
 
 client_id = os.getenv('GOOGLE_CLIENT_ID')
 client_secret = os.getenv('GOOGLE_CLIENT_SECRET')
 
-# Setup the OAuth2 flow
+# Initialize OAuth2 flow
 flow = Flow.from_client_secrets_file(
     client_secret_file,
-    scopes=["openid https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile"],  # Define the scope you need
+    scopes=["openid", "https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/userinfo.profile"],
     redirect_uri=redirect_uri
 )
 
