@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 from dotenv import load_dotenv
 from google.cloud import secretmanager
+from google.auth import credentials
 from google_auth_oauthlib.flow import Flow
 import requests
 import random
@@ -8,8 +9,6 @@ import time
 import logging
 import json
 import os
-
-
 
 # Load environment variables from .env file
 load_dotenv()
@@ -47,8 +46,14 @@ else:
 
 # Determine which credentials file to use
 if os.getenv('GOOGLE_APPLICATION_CREDENTIALS'):
+    # Get the credentials directly from the environment variable
+    google_credentials_json = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
     # Setup Google Secret Manager client
-    client = secretmanager.SecretManagerServiceClient()
+    from google.oauth2 import service_account
+    credentials = service_account.Credentials.from_service_account_info(
+        json.loads(google_credentials_json)
+    )
+    client = secretmanager.SecretManagerServiceClient(credentials=credentials)
 
     # Define your project ID and secret name
     project_id = "triviapage"
