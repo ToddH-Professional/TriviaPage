@@ -60,8 +60,26 @@ else:
     # Local development
     client_secret_file = os.getenv('GOOGLE_CLIENT_SECRET_PATH', "client_secret.json")
 
+# Setup Google Secret Manager client
+client = secretmanager.SecretManagerServiceClient()
+
+# Define your project ID and secret name
+project_id = "triviapage"
+version_id = "latest"
 client_id = os.getenv('GOOGLE_CLIENT_ID')
 client_secret = os.getenv('GOOGLE_CLIENT_SECRET')
+
+# Build the secret name path
+name = f"projects/{project_id}/secrets/{client_secret}/versions/{version_id}"
+
+# Access the secret
+response = client.access_secret_version(request={"name": name})
+client_secret_json = response.payload.data.decode("UTF-8")
+
+# Write to a temp file (OAuth requires a file, not a string)
+temp_credentials_path = "/tmp/client_secret.json"
+with open(temp_credentials_path, "w") as f:
+    f.write(client_secret_json)
 
 # Initialize OAuth2 flow
 flow = Flow.from_client_secrets_file(
