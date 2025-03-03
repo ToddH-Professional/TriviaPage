@@ -7,6 +7,7 @@ import time
 import logging
 import json
 import os
+import base64
 
 
 # Load environment variables from .env file
@@ -14,6 +15,12 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('FLASK_SECRET_KEY')
+
+import os
+import json
+import base64
+
+
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -41,11 +48,17 @@ if os.getenv('RAILWAY_PUBLIC_DOMAIN'):
     redirect_uri = 'https://' + os.getenv('RAILWAY_PUBLIC_DOMAIN') + '/callback'
 else:
     # Default for local development
-    redirect_uri = 'https://d7ec-68-97-137-104.ngrok-free.app/callback'
+    redirect_uri = 'https://8c86-68-97-137-104.ngrok-free.app/callback'
+
+if os.getenv('GOOGLE_APPLICATION_CREDENTIALS'):
+    # Save JSON key to a file
+    client_secret_file = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+else:
+    # Use the local client_secret.json file during local development
+    client_secret_file = os.getenv('GOOGLE_CLIENT_SECRET_PATH')
 
 client_id = os.getenv('GOOGLE_CLIENT_ID')
 client_secret = os.getenv('GOOGLE_CLIENT_SECRET')
-client_secret_file = os.getenv('GOOGLE_CLIENT_SECRET_PATH')
 
 # Setup the OAuth2 flow
 flow = Flow.from_client_secrets_file(
