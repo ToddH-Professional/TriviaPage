@@ -54,24 +54,25 @@ if os.getenv('GOOGLE_APPLICATION_CREDENTIALS'):
         json.loads(google_credentials_json)
     )
     client = secretmanager.SecretManagerServiceClient(credentials=credentials)
-
+  
     # Define your project ID and secret name
-    project_id = "triviapage"
-    version_id = "latest"
-    client_id = os.getenv('GOOGLE_CLIENT_ID')
-    client_secret = os.getenv('GOOGLE_CLIENT_SECRET')
+    #project_id = "triviapage"
+    #version_id = "latest"
+    #client_id = os.getenv('GOOGLE_CLIENT_ID')
+    #client_secret = os.getenv('GOOGLE_CLIENT_SECRET')
 
     # Build the secret name path
-    name = f"projects/{project_id}/secrets/{client_secret}/versions/{version_id}"
+    #name = f"projects/{project_id}/secrets/{client_secret}/versions/{version_id}"
 
     # Access the secret
-    response = client.access_secret_version(request={"name": name})
-    client_secret_json = response.payload.data.decode("UTF-8")
+    #response = client.access_secret_version(request={"name": name})
+    #client_secret_json = response.payload.data.decode("UTF-8")
 
     # Write to a temp file (OAuth requires a file, not a string)
-    client_secret_file = "/tmp/client_secret.json"
-    with open(client_secret_file, "w") as f:
-        f.write(client_secret_json)
+    #client_secret_file = "/tmp/client_secret.json"
+    #with open(client_secret_file, "w") as f:
+    #    f.write(client_secret_json)
+        
 else:
     # Local development
     client_secret_file = os.getenv('GOOGLE_CLIENT_SECRET_PATH', "client_secret.json")
