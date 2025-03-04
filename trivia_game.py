@@ -9,6 +9,7 @@ import time
 import logging
 import json
 import os
+import re
 
 # Load environment variables from .env file
 load_dotenv()
@@ -20,6 +21,23 @@ app.secret_key = os.getenv('FLASK_SECRET_KEY')
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+# Masking tokens
+def mask_tokens(log_message):
+    return re.sub(r'(access_token|id_token|refresh_token)=[^\s]+', r'\1=****', log_message)
+
+class TokenFilter(logging.Filter):
+    def filter(self, record):
+        record.msg = mask_tokens(record.msg)
+        return True
+
+logger.addFilter(TokenFilter())
+
+@app.before_request
+def filter_sensitive_data():
+    request_data = request.get_data(as_text=True)
+    sanitized_data = mask_tokens(request_data)
+    app.logger.info(f"Filtered Request: {sanitized_data}")
+    
 # Initialize the players' scores and names
 players_scores = {}
 player_order = []  # To store the order of players
