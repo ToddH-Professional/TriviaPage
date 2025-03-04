@@ -65,12 +65,12 @@ if os.getenv('GOOGLE_APPLICATION_CREDENTIALS'):
 
     # Access the secret
     response = client.access_secret_version(request={"name": name})
-    #client_secret_json = response.payload.data.decode("UTF-8")
+    client_secret_json = response.payload.data.decode("UTF-8")
 
     # Write to a temp file (OAuth requires a file, not a string)
-    #client_secret_file = "/tmp/client_secret.json"
-    #with open(client_secret_file, "w") as f:
-    #    f.write(client_secret_json)
+    client_secret_file = "/tmp/client_secret.json"
+    with open(client_secret_file, "w") as f:
+        f.write(client_secret_json)
         
 else:
     # Local development
