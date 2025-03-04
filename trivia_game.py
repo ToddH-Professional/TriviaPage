@@ -18,7 +18,6 @@ app = Flask(__name__)
 app.secret_key = os.getenv('FLASK_SECRET_KEY')
 
 # Set up logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 class MaskSensitiveData(logging.Filter):
@@ -44,7 +43,6 @@ class MaskSensitiveData(logging.Filter):
         return log_message
 
 # Apply the filter to your logger
-logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)  # Keep debug mode on
 mask_filter = MaskSensitiveData()
 
