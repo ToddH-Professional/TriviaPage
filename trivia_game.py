@@ -21,22 +21,44 @@ app.secret_key = os.getenv('FLASK_SECRET_KEY')
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Masking tokens
-def mask_tokens(log_message):
-    return re.sub(r'(access_token|id_token|refresh_token)=[^\s]+', r'\1=****', log_message)
-
-class TokenFilter(logging.Filter):
+class MaskSensitiveData(logging.Filter):
     def filter(self, record):
-        record.msg = mask_tokens(record.msg)
+        record.msg = self.mask_tokens(str(record.msg))
         return True
 
-logger.addFilter(TokenFilter())
+    def mask_tokens(self, log_message):
+        # Define multiple regex patterns for different sensitive fields
+        patterns = [
+            (r'(access_token=)[^\s]+', r'\1****'),  # Mask access tokens
+            (r'(id_token=)[^\s]+', r'\1****'),      # Mask ID tokens
+            (r'(refresh_token=)[^\s]+', r'\1****'), # Mask refresh tokens
+            (r'(Authorization: Bearer )\S+', r'\1****'), # Mask Authorization headers
+            (r'(client_secret=)[^\s]+', r'\1****'), # Mask OAuth client secrets
+            (r'(code=)[^\s]+', r'\1****'),         # Mask auth codes from OAuth
+        ]
 
-@app.before_request
-def filter_sensitive_data():
-    request_data = request.get_data(as_text=True)
-    sanitized_data = mask_tokens(request_data)
-    app.logger.info(f"Filtered Request: {sanitized_data}")
+        # Apply each pattern to mask sensitive data
+        for pattern, replacement in patterns:
+            log_message = re.sub(pattern, replacement, log_message, flags=re.IGNORECASE)
+
+        return log_message
+
+# Apply the filter to your logger
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)  # Keep debug mode on
+mask_filter = MaskSensitiveData()
+
+# Apply filter to all handlers
+for handler in logger.handlers:
+    handler.addFilter(mask_filter)
+
+# If no handlers exist, create one
+if not logger.hasHandlers():
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.DEBUG)
+    console_handler.addFilter(mask_filter)
+    logger.addHandler(console_handler)
+
     
 # Initialize the players' scores and names
 players_scores = {}
