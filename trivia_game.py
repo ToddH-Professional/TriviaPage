@@ -111,8 +111,8 @@ def callback():
     #credentials = flow.credentials
     #logger.info(f"Logged in as: {credentials.id_token.get('email')}")    
     # Ensure state matches to prevent CSRF attacks
-    #if session.get('state') != request.args.get('state'):
-        #return 'State mismatch error', 400
+    if session.get('state') != request.args.get('state'):
+        return 'State mismatch error', 400
 
     return redirect(url_for('index'))
 
