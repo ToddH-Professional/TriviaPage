@@ -117,7 +117,7 @@ def callback():
     player_name = user_info.get('name', 'Player')
 
     # Store user info in session
-    #session['player_name'] = player_name
+    session['player_name'] = player_name
 
     # Ensure state matches to prevent CSRF attacks
     if session.get('state') != request.args.get('state'):
