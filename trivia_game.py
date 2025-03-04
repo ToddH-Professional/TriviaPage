@@ -56,14 +56,12 @@ if os.getenv('GOOGLE_APPLICATION_CREDENTIALS'):
     client = secretmanager.SecretManagerServiceClient(credentials=credentials)
   
     # Define your project ID and secret name
-    project_id = "364391087897"
-    client_secret = os.getenv('GOOGLE_CLIENT_SECRET')
-    version_id = "latest"
+    #client_secret = os.getenv('GOOGLE_CLIENT_SECRET')
     client_id = os.getenv('GOOGLE_CLIENT_ID')
     
 
     # Build the secret name path
-    name = f"projects/{project_id}/secrets/{client_secret}/versions/{version_id}"
+    name = f"projects/364391087897/secrets/triviapage-oauth-secret"
 
     # Access the secret
     response = client.access_secret_version(request={"name": name})
