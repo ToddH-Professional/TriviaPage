@@ -105,19 +105,19 @@ def logout():
 def callback():
     auth_response = request.url.replace("http://", "https://")    
     logger.info(f"Auth response URL: {auth_response}")    
-    #logger.info(f"Request state: {request.args.get('state')}")
     token = flow.fetch_token(authorization_response=auth_response)
+    logger.info(f"Flow token: {token}")
     # Get the user's profile information
-        # Get the authorization response
-    flow.fetch_token(authorization_response=request.url)
-    credentials = flow.credentials
+    # Get the authorization response
+    #flow.fetch_token(authorization_response=request.url)
+    #credentials = flow.credentials
     # Use the credentials to get user info
-    response = requests.get(
-        'https://www.googleapis.com/oauth2/v2/userinfo', 
-        headers={'Authorization': f'Bearer {credentials.token}'}
-    ) 
-    user_info = response.json()
-    player_name = user_info.get('name', 'Player')
+    #response = requests.get(
+    #    'https://www.googleapis.com/oauth2/v2/userinfo', 
+    #    headers={'Authorization': f'Bearer {credentials.token}'}
+    #) 
+    #user_info = response.json()
+    #player_name = user_info.get('name', 'Player')
 
     # Store user info in session
     session['player_name'] = player_name
