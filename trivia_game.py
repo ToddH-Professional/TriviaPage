@@ -149,7 +149,6 @@ def callback():
     auth_response = request.url.replace("http://", "https://")    
     logger.info(f"Auth response URL: {auth_response}")    
     token = flow.fetch_token(authorization_response=auth_response)
-    logger.info(f"Flow token: {token}")
     credentials = flow.credentials
     # Use the credentials to get user info
     response = requests.get(
