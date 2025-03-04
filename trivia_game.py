@@ -107,9 +107,9 @@ def callback():
     logger.info(f"Auth response URL: {auth_response}")    
     token = flow.fetch_token(authorization_response=auth_response)
     logger.info(f"Flow token: {token}")
-    # Get the user's profile information
     # Get the authorization response
-    #flow.fetch_token(authorization_response=request.url)
+
+    flow.fetch_token(authorization_response=request.url)    
     #credentials = flow.credentials
     # Use the credentials to get user info
     #response = requests.get(
@@ -120,7 +120,7 @@ def callback():
     #player_name = user_info.get('name', 'Player')
 
     # Store user info in session
-    session['player_name'] = player_name
+    #session['player_name'] = player_name
 
     # Ensure state matches to prevent CSRF attacks
     if session.get('state') != request.args.get('state'):
