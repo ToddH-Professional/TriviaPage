@@ -77,15 +77,14 @@ else:
     # Local development
     client_secret_file = os.getenv('GOOGLE_CLIENT_SECRET_PATH', "client_secret.json")
 
-# Initialize OAuth2 flow
-flow = Flow.from_client_secrets_file(
-    client_secret_file,
-    scopes=["openid", "https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/userinfo.profile"],
-    redirect_uri=redirect_uri
-)
-
 @app.route('/login')
 def login():  
+    # Initialize OAuth2 flow
+    flow = Flow.from_client_secrets_file(
+        client_secret_file,
+        scopes=["openid", "https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/userinfo.profile"],
+        redirect_uri=redirect_uri
+    )
     logger.info(f"Redirect URI before flow: {redirect_uri}")    
     # Pass the redirect_uri dynamically when creating the flow, not here
     authorization_url, state = flow.authorization_url(
@@ -103,6 +102,12 @@ def logout():
 
 @app.route('/callback')
 def callback():
+    # Initialize OAuth2 flow
+    flow = Flow.from_client_secrets_file(
+        client_secret_file,
+        scopes=["openid", "https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/userinfo.profile"],
+        redirect_uri=redirect_uri
+    )
     auth_response = request.url.replace("http://", "https://")    
     logger.info(f"Auth response URL: {auth_response}")    
     token = flow.fetch_token(authorization_response=auth_response)
