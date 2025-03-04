@@ -61,7 +61,7 @@ if os.getenv('GOOGLE_APPLICATION_CREDENTIALS'):
     
 
     # Build the secret name path
-    name = f"projects/364391087897/secrets/triviapage-oauth-secret"
+    name = f"projects/364391087897/secrets/triviapage-oauth-secret/versions/latest"
 
     # Access the secret
     response = client.access_secret_version(request={"name": name})
