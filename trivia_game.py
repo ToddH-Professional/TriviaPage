@@ -56,7 +56,7 @@ if os.getenv('GOOGLE_APPLICATION_CREDENTIALS'):
     client = secretmanager.SecretManagerServiceClient(credentials=credentials)
   
     # Define your project ID and secret name
-    project_id = "triviapage"
+    project_id = "364391087897"
     client_secret = os.getenv('GOOGLE_CLIENT_SECRET')
     version_id = "latest"
     client_id = os.getenv('GOOGLE_CLIENT_ID')
