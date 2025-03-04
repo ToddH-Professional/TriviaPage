@@ -28,13 +28,14 @@ current_player_index = 0
 # The index page
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    
+    logger.info(f"Redirect URI before flow: {redirect_uri}")    
     if request.method == 'POST':
         num_players = int(request.form['num_players'])  # Get number of players from the form
         session['num_players'] = num_players  # Store the number of players in the session
         return redirect(url_for('get_names'))  # Redirect to the player names page
     
-    return render_template('index.html')  # Render the index page if it's a GET request
+    player_name = session.get('player_name', None)
+    return render_template('index.html', player_name=player_name)  # Render the index page if it's a GET request
 
 # For google oauth
 # Determine the redirect URI based on environment
@@ -104,12 +105,23 @@ def logout():
 def callback():
     auth_response = request.url.replace("http://", "https://")    
     logger.info(f"Auth response URL: {auth_response}")    
-
     #logger.info(f"Request state: {request.args.get('state')}")
     token = flow.fetch_token(authorization_response=auth_response)
     # Get the user's profile information
-    #credentials = flow.credentials
-    #logger.info(f"Logged in as: {credentials.id_token.get('email')}")    
+        # Get the authorization response
+    flow.fetch_token(authorization_response=request.url)
+    credentials = flow.credentials
+    # Use the credentials to get user info
+    response = requests.get(
+        'https://www.googleapis.com/oauth2/v2/userinfo', 
+        headers={'Authorization': f'Bearer {credentials.token}'}
+    ) 
+    user_info = response.json()
+    player_name = user_info.get('name', 'Player')
+
+    # Store user info in session
+    session['player_name'] = player_name
+
     # Ensure state matches to prevent CSRF attacks
     if session.get('state') != request.args.get('state'):
         return 'State mismatch error', 400
