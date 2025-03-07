@@ -221,6 +221,7 @@ def googlelogin():
         include_granted_scopes='true'
     )
     session['state'] = state
+    logger.info(f"State: {state}")
     return redirect(authorization_url)
 
 @app.route('/callback')
@@ -233,7 +234,7 @@ def callback():
     )
 
     auth_response = request.url.replace("http://", "https://")  
-    token = flow.fetch_token(authorization_response=auth_response)
+    flow.fetch_token(authorization_response=auth_response)
     credentials = flow.credentials
 
     # Use the credentials to get user info
@@ -243,11 +244,8 @@ def callback():
     ) 
 
     user_info = response.json()
-    logger.info(f"state")
-    # Ensure state matches to prevent CSRF attacks
-    if session.get('state') != request.args.get('state'):
-        return 'State mismatch error', 400
-    
+    # Needs CSRF protection
+    #     
     email = user_info.get('email')
     username = user_info.get('name')  # Or use 'email' as username if you prefer
 
