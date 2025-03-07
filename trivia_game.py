@@ -24,6 +24,7 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('FLASK_SECRET_KEY')
+csrf = CSRFProtect(app)  # Enable CSRF protection
 
 # Set up Flask-Login and Flask-Bcrypt
 bcrypt = Bcrypt(app)
@@ -243,7 +244,7 @@ def callback():
     ) 
 
     user_info = response.json()
-    logger.info(f"{session}")
+    logger.info(f"state")
     # Ensure state matches to prevent CSRF attacks
     if session.get('state') != request.args.get('state'):
         return 'State mismatch error', 400
