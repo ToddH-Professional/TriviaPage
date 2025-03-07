@@ -10,6 +10,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_migrate import Migrate
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from flask_session import Session
+from datetime import timedelta
 
 import requests
 import random
@@ -34,6 +36,11 @@ login_manager.login_view = 'index'
 app.config['SESSION_COOKIE_SECURE'] = True  # Ensure cookies are only sent over HTTPS
 app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent JavaScript access to cookies
 app.config['SESSION_COOKIE_SAMESITE'] = 'Strict'  # Protect against CSRF attacks
+app.config['SESSION_TYPE'] = 'filesystem'  # Stores sessions on disk
+app.config['SESSION_PERMANENT'] = True
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
+Session(app)
+
 login_manager.session_protection = "strong"  # Use strong protection for session security
 
 # Load user from the db
@@ -221,7 +228,7 @@ def googlelogin():
         include_granted_scopes='true'
     )
     session['state'] = state
-    logger.info(f"State: {state}")
+    logger.info(f"Session after setting state: {session}")
     return redirect(authorization_url)
 
 @app.route('/callback')
@@ -260,6 +267,9 @@ def callback():
 
     # Log the user in
     login_user(user)
+    logger.info(f"Incoming state from request: {request.args.get('state')}")
+    logger.info(f"Session at callback: {session}")
+    logger.info(f"User authenticated? {current_user.is_authenticated}")
     flash('Logged in successfully with Google!', 'success')
 
     return redirect(url_for('index'))

@@ -13,3 +13,4 @@ flask-login
 flask_bcrypt
 flask-migrate
 flask-limiter
+flask-session
