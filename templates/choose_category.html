@@ -5,7 +5,6 @@
     <title>Choose Category</title>
 </head>
 <body>
-    <h1>Welcome, {{ current_player }}!</h1>
     <form method="post" action="{{ url_for('choose_category') }}">
         <label for="category">Choose a category:</label>
         <select id="category" name="category" required>
@@ -14,6 +13,11 @@
             {% endfor %}
         </select>
         <br>
+        <ul>
+            <li>Easy is 1 point</li>
+            <li>Medium is 2 points</li>
+            <li>Hard is 3 points</li>
+        </ul>
         <label for="difficulty">Choose difficulty:</label>
         <select name="difficulty" id="difficulty" required>
             <option value="easy">Easy</option>

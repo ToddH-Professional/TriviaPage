@@ -7,18 +7,35 @@
 </head>
 <body>
     <h1>Welcome to the Trivia Game!</h1>
-    {% if player_name %}
-        <h2>Welcome, {{ player_name }}!</h2>
-        <a href="{{ url_for('logout') }}">Logout</a>
+    {% if current_user.is_authenticated %}
+        <h2>Welcome, {{ current_user.username }}!</h2>
+        <form action="{{ url_for('choose_category') }}" method="get">
+            <button type="submit" class="btn btn-primary">Start Game</button>
+        </form> 
+        <form action="{{ url_for('logout') }}" method="get">
+            <button type="submit" class="btn btn-primary">Logout</button>
+        </form> 
+
     {% else %}
-        <form action="{{ url_for('login') }}" method="get">
-            <button type="submit" class="btn btn-primary">Login with Google</button>
-        </form>
-    {% endif %}
-    <form action="/" method="POST">
-        <label for="num_players">How many players want to play?</label>
-        <input type="number" id="num_players" name="num_players" min="1" required>
-        <button type="submit">Next</button>
+    
+    <form action="{{ url_for('googlelogin') }}" method="get">
+        <button type="submit" class="btn btn-primary">Login with Google</button>
+    </form> 
+       
+    <form action="{{ url_for('register') }}" method="get">
+        <button type="submit" class="btn btn-primary">Register for an account </button>            
     </form>
+    
+    <form action="{{ url_for('login') }}" method="POST">
+        <label for="username">Username:</label>
+        <input type="text" name="username" id="username" required><br>
+        
+        <label for="password">Password:</label>
+        <input type="password" name="password" id="password" required><br>
+
+        <button type="submit">Login</button>
+    </form>
+    {% endif %}
+
 </body>
 </html>

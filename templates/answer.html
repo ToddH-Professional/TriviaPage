@@ -13,14 +13,8 @@
     {% else %}
         <p style="color: red;">Incorrect. The correct answer was: <strong>{{ correctAnswer }}</strong></p>
     {% endif %}
-    <h2>Scores:</h2>
-    <ul>
-        {% for player, score in session["players_scores"].items() %}
-            <li>{{ player }}: {{ score }}</li>
-        {% endfor %}
-    </ul>
-    <h3>{{ current_player }}'s Turn</h3>
-
+    <h2>Score:</h2>
+    <p>Score: {{ score }}</p>
     <h4>Next question from the same category:</h4>
     <form action="{{ url_for('ask_question') }}" method="get" id="nextQuestionForm">
         <button type="submit" id="nextQuestionBtn">Next Question</button>
@@ -40,8 +34,8 @@
         });
     </script>
     <hr>
-    <form action="{{ url_for('index') }}" method="get" id="indexForm">
-        <button type="submit" id="indexBtn">Start Over</button>
+    <form action="{{ url_for('logout') }}" method="get" id="indexForm">
+        <button type="submit" id="indexBtn">Logout</button>
     </form>
     <script>
         document.getElementById("indexForm").addEventListener("submit", function() {

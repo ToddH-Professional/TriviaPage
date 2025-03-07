@@ -1,13 +1,9 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session
 from dotenv import load_dotenv
 from google.cloud import secretmanager
 from google.auth import credentials
 from google_auth_oauthlib.flow import Flow
-from database import db, User
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-from flask_bcrypt import Bcrypt
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask_migrate import Migrate
+from database import db, Player  
 
 import requests
 import random
@@ -22,17 +18,6 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('FLASK_SECRET_KEY')
-
-# Set up Flask-Login and Flask-Bcrypt
-bcrypt = Bcrypt(app)
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = 'index'
-
-# Load user from the db
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))  # Get the user by ID from the database
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -59,6 +44,8 @@ class MaskSensitiveData(logging.Filter):
 
         return log_message
 
+
+
 # Apply the filter to your logger
 logger.setLevel(logging.DEBUG)  # Keep debug mode on
 mask_filter = MaskSensitiveData()
@@ -75,70 +62,22 @@ if not logger.hasHandlers():
     logger.addHandler(console_handler)
 
     
-# Initialize the players' score
-player_score = {}
+# Initialize the players' scores and names
+players_scores = {}
+player_order = []  # To store the order of players
+current_player_index = 0
 
 # The index page
-@app.route('/', methods=['GET'])
+@app.route('/', methods=['GET', 'POST'])
 def index():
-    return render_template('index.html') # Render the index page if it's a GET request
-
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('index'))
-
-#------ SELF REGISTRATION ------ #
-   
-@app.route('/register', methods=['GET', 'POST'])
-def register():
+    players = Player.query.all()  # Query all players    
     if request.method == 'POST':
-        username = request.form['username']
-        email = request.form['email']
-        password = request.form['password']
-        
-        # Check if the username or email already exists
-        existing_user = User.query.filter((User.username == username) | (User.email == email)).first()
-        if existing_user:
-            flash('Username or email already exists', 'danger')
-            return redirect(url_for('register'))
-        
-        # Create new user and add to DB
-        new_user = User(username=username, email=email, score=0)
-        new_user.set_password(password)  # Hash using bcrypt
+        num_players = int(request.form['num_players'])  # Get number of players from the form
+        session['num_players'] = num_players  # Store the number of players in the session
+        return redirect(url_for('get_names'))  # Redirect to the player names page        
+    return render_template('index.html', players=players)  # Render the index page if it's a GET request
 
-        db.session.add(new_user)
-        db.session.commit()
-        
-        flash('Account created successfully! You can now log in.', 'success')
-        return redirect(url_for('index'))
-    
-    return render_template('register.html')
-
-@app.route('/login', methods=['POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-    
-        # Find user in the database
-        user = User.query.filter_by(username=username).first()
-    
-        if user and bcrypt.check_password_hash(user.password_hash, password):
-            # If the user is found and the password matches, log the user in
-            login_user(user)  # This stores user.id in the session, not the username
-            flash('Logged in successfully!', 'success')
-            return redirect(url_for('index'))
-            
-        flash('Invalid credentials', 'danger')
-        return redirect(url_for('index'))
-
-    return redirect(url_for('index'))
-
-#------ End of SELF REGISTRATION ------ #
-
-#------ GOOGLE LOGIN ------#
-
+# For google oauth
 # Determine the redirect URI based on environment
 if os.getenv('RAILWAY_PUBLIC_DOMAIN'):
     redirect_uri = 'https://' + os.getenv('RAILWAY_PUBLIC_DOMAIN') + '/callback'
@@ -178,21 +117,28 @@ else:
     # Local development
     client_secret_file = os.getenv('GOOGLE_CLIENT_SECRET_PATH', "client_secret.json")
 
-@app.route('/googlelogin')
-def googlelogin():  
+@app.route('/login')
+def login():  
     # Initialize OAuth2 flow
     flow = Flow.from_client_secrets_file(
         client_secret_file,
         scopes=["openid", "https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/userinfo.profile"],
         redirect_uri=redirect_uri
     )
+    logger.info(f"Redirect URI before flow: {redirect_uri}")    
     # Pass the redirect_uri dynamically when creating the flow, not here
     authorization_url, state = flow.authorization_url(
         access_type='offline',
         include_granted_scopes='true'
     )
     session['state'] = state
+    logger.info(f"Redirecting to Google authorization URL: {authorization_url}")
     return redirect(authorization_url)
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('index'))
 
 @app.route('/callback')
 def callback():
@@ -202,41 +148,26 @@ def callback():
         scopes=["openid", "https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/userinfo.profile"],
         redirect_uri=redirect_uri
     )
-
-    auth_response = request.url.replace("http://", "https://")  
+    auth_response = request.url.replace("http://", "https://")    
+    # logger.info(f"Auth response URL: {auth_response}")    
     token = flow.fetch_token(authorization_response=auth_response)
     credentials = flow.credentials
-
     # Use the credentials to get user info
     response = requests.get(
         'https://www.googleapis.com/oauth2/v2/userinfo', 
         headers={'Authorization': f'Bearer {credentials.token}'}
     ) 
-
     user_info = response.json()
+    player_name = user_info.get('name', 'Player')
+
+    # Store user info in session
+    session['player_name'] = player_name
 
     # Ensure state matches to prevent CSRF attacks
     if session.get('state') != request.args.get('state'):
         return 'State mismatch error', 400
-    
-    email = user_info.get('email')
-    username = user_info.get('name')  # Or use 'email' as username if you prefer
-
-    # Check if user already exists
-    user = User.query.filter_by(email=email).first()
-
-    if not user:
-            # Create a new user with a default score
-            user = User(username=username, email=email, score=0)
-            db.session.add(user)
-            db.session.commit()
-
-    # Log the user in
-    login_user(user)
-    flash('Logged in successfully with Google!', 'success')
 
     return redirect(url_for('index'))
-#------ End of GOOGLE LOGIN ------#
 
 #------ This is the database section -----#
 
@@ -249,22 +180,68 @@ else:
 
 # Initialize the database with the app
 db.init_app(app)
-migrate = Migrate(app, db)
+
+# Route to add a player
+@app.route('/add_player', methods=['POST'])
+def add_player():
+    player_name = request.form.get('name')
+    player_score = request.form.get('score', 0)
+
+    if player_name:  # Ensure a name is provided
+        new_player = Player(name=player_name, score=player_score)
+        db.session.add(new_player)
+        db.session.commit()
+
+    return redirect(url_for('index'))
+
+# Route to update player score (for example, after a trivia game)
+@app.route('/update_score/<int:player_id>', methods=['POST'])
+def update_score(player_id):
+    new_score = request.form.get('score')
+    player = Player.query.get_or_404(player_id)
+    player.score = new_score
+    db.session.commit()
+    return redirect(url_for('index'))
 
 #------ END OF DB FUNCTIONS ------#
 
+# Get the names of players
+@app.route('/get_names', methods=['GET', 'POST'])
+def get_names():
+    # Get the number of players from the session
+    num_players = session.get('num_players')  
+    if num_players is None:
+        return redirect(url_for('index'))  # If no number of players is set, redirect to index
+    
+    if request.method == 'POST':
+        # Collect player names from the form and store them in the session
+        players = [request.form[f'player_{i}'] for i in range(1, num_players + 1)]
+        
+        # Initialize session with players and other session data
+        session['players'] = players  # Save player names in the session
+        session['current_player_index'] = 0  # Start with the first player
+        session['players_scores'] = {player: 0 for player in players} # Needs python 3.7 or higher.  Otherwise, make an OrderedDict
+        
+        return redirect(url_for('choose_category'))  # Redirect to the category selection page
+    
+    return render_template('get_names.html', num_players=num_players)  # Render the names form
+
+
 # Create a player session
-def initialize_player_session(username):
-    """Initialize the player session for a single player if it's not already set."""
-    if 'username' not in session:
-        session['username'] = username  # Store the player's name in the session
+def initialize_player_session(players):
+    """Initialize the player session if it's not already set."""
+    if 'players' not in session:
+        session['players'] = players  # Store the players in the session
 
-    if 'score' not in session:
-        session['score'] = 0  # Initialize the player's score if not set
-
+    if 'current_player_index' not in session:
+        session['current_player_index'] = 0  # Initialize current player index if not set
+    
+    if 'players_scores' not in session:
+        session['players_scores'] = {player: 0 for player in players}  # Initialize player scores
 
 @app.route('/choose_category', methods=['GET', 'POST'])
-def choose_category():    
+def choose_category():
+
     def generate_categories(*category_tuples):
     # Generate list of dictionaries from tuples.  The name is needed for the API call later
         return [{"name": name, "displayname": display} for name, display in category_tuples]
@@ -283,12 +260,19 @@ def choose_category():
     )
 
     # Checks if players exist or not
-    username = current_user.username
-    if not username:
+    players = session.get('players', []) 
+    if not players:
         return redirect(url_for('index'))
 
     # Create a player session for names and scores
-    initialize_player_session(username)
+    initialize_player_session(players)
+
+    # Ensure current_player_index is within bounds
+    current_player_index = session.get('current_player_index', 0) % len(players)
+
+    # Set the current player
+    current_player = players[current_player_index]
+    session['current_player'] = current_player
 
     if request.method == 'POST':
         # Get selected category ID and difficulty
@@ -299,20 +283,29 @@ def choose_category():
         return redirect(url_for('ask_question', category=chosen_category_id, difficulty=difficulty))
 
     return render_template('choose_category.html', 
-                            categories=categories)
+                            categories=categories, 
+                            current_player=current_player)
 
 @app.route('/ask_question', methods=['GET'])
 def ask_question():
     # Checks if players exist or not
-    username = current_user.username
-    if not username:
+    players = session.get('players', []) 
+    if not players:
         return redirect(url_for('index'))
 
     # Create a session to hold data between pages
-    initialize_player_session(username)
+    initialize_player_session(players)
+    # Ensure current_player_index is within bounds
+    current_player_index = session.get('current_player_index', 0) % len(players)
+
+    # Set the current player
+    current_player = players[current_player_index]
+    session['current_player'] = current_player
 
     # Ensure Flask registers session changes
     session.modified = True 
+
+    logger.info(f"Current Player: {current_player} (Index: {current_player_index})")
 
     # Try to get category and difficulty from request args first, fallback to session
     category = request.args.get('category') or session.get('category')
@@ -326,7 +319,7 @@ def ask_question():
     session['category'] = category 
     session['difficulty'] = difficulty
 
-    url = f"https://the-trivia-api.com/v2/questions?categories={category}&difficulties={difficulty}&limit=1"  
+    url = f"https://the-trivia-api.com/v2/questions?categories={category}&difficulty={difficulty}"  
 
     # Pulls the question and answers
     try:
@@ -357,7 +350,8 @@ def ask_question():
 
         return render_template('ask_question.html', 
                            question=question_data['question'], 
-                           answers=answers)
+                           answers=answers, 
+                           current_player=current_player)
     
     except Exception as e:
         logger.error(f"Error fetching question: {str(e)}")
@@ -366,26 +360,20 @@ def ask_question():
 
 @app.route('/answer', methods=['GET', 'POST'])
 def answer():
-    logger.info(f"Session Data: { session['difficulty'] }")  
     # In case someone goes directly to the page
     if request.method == ['GET'] :
         return redirect(url_for('index'))
-    
     # Checks if players exist or not
-    username = current_user.username
-
-    if not username:
-        return redirect(url_for('index')) 
-         
-    user = User.query.filter_by(username=username).first() # Fetch the user from the database
+    players = session.get('players', []) 
+    if not players:
+        return redirect(url_for('index'))        
 
     # Save the selected answer into the session    
     selected_answer = request.form.get('answer')
-
     if not selected_answer:
         logger.error("No answer selected!")
         return redirect(url_for('ask_question'))  # If no answer is selected, redirect back
-        
+    
     session['selected_answer'] = selected_answer  # Save the selected answer to session 
 
     # Get the correct answer from session
@@ -394,31 +382,29 @@ def answer():
         logger.error("No question found in session!")
         return redirect(url_for('ask_question'))  # Redirect to fetch a new question
 
-    correctAnswer = question.get('correctAnswer')  
+    correctAnswer = question.get('correctAnswer')    
+    # Load player scores from session
+    players_scores = session.get("players_scores", {})    
 
     if selected_answer == correctAnswer:
-        # Determine points based on difficulty
-        if session['difficulty'] == 'easy':
-            points = 1
-        elif session['difficulty'] == 'medium':
-            points = 2
-        elif session['difficulty'] == 'hard':
-            points = 3
-          
-        user.score += points  # Add the calculated points
-        score = user.score
-        session.modified = True  # Ensure session updates are saved 
-    else:
-        score = user.score
-        
-    # Commit the score to the db
-    db.session.commit()
+        # Update score if correct
+        current_player = session.get("current_player")
+        players_scores[current_player] = players_scores.get(current_player, 0) + 1
+
+    # Save updated scores back to session
+    session["players_scores"] = {k: players_scores[k] for k in session['players']} 
+
+    # Move to next player and reset automatically when reaching the end
+    session['current_player_index'] = (session.get('current_player_index', 0) + 1) % len(session['players'])
+    session['current_player'] = session['players'][session['current_player_index']]
+    session.modified = True  # Ensure session updates are saved
+    current_player = session.get("current_player") # Update this variable to offer next player options
+
     return render_template('answer.html', 
                            selected_answer=selected_answer, 
                            correctAnswer=correctAnswer,
-                           score=score)
+                           current_player=current_player)
 
-    
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()  # Create all tables if they don't exist
