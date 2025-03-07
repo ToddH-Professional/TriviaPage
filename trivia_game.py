@@ -9,6 +9,7 @@ from flask_bcrypt import Bcrypt
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_migrate import Migrate
 from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 import requests
 import random
@@ -129,10 +130,10 @@ def register():
 
 #------ End of SELF REGISTRATION ------ #
 
-limiter = Limiter(app, key_func=request.remote_addr)
+#limiter = Limiter(app, key_func=get_remote_address)
 
 @app.route('/login', methods=['POST'])
-@limiter.limit("5 per minute")
+#@limiter.limit("5 per minute")  
 def login():
     if request.method == 'POST':
         username = request.form['username']
