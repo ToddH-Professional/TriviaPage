@@ -242,7 +242,7 @@ def callback():
     ) 
 
     user_info = response.json()
-
+    logger.info(f"session['state']")
     # Ensure state matches to prevent CSRF attacks
     if session.get('state') != request.args.get('state'):
         return 'State mismatch error', 400
