@@ -24,7 +24,6 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('FLASK_SECRET_KEY')
-csrf = CSRFProtect(app)  # Enable CSRF protection
 
 # Set up Flask-Login and Flask-Bcrypt
 bcrypt = Bcrypt(app)
