@@ -94,6 +94,7 @@ def index():
 def logout():
     logout_user()
     session.clear()
+    flash('You have logged out.', 'success')
     return redirect(url_for('index'))
 
 #------ SELF REGISTRATION ------ #
@@ -242,7 +243,7 @@ def callback():
     ) 
 
     user_info = response.json()
-    logger.info(f"session['state']")
+    logger.info(f"{session['state']}")
     # Ensure state matches to prevent CSRF attacks
     if session.get('state') != request.args.get('state'):
         return 'State mismatch error', 400
