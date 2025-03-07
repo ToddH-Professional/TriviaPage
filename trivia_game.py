@@ -8,6 +8,7 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from flask_bcrypt import Bcrypt
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_migrate import Migrate
+from flask_limiter import Limiter
 
 import requests
 import random
@@ -28,6 +29,11 @@ bcrypt = Bcrypt(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'index'
+
+app.config['SESSION_COOKIE_SECURE'] = True  # Ensure cookies are only sent over HTTPS
+app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent JavaScript access to cookies
+app.config['SESSION_COOKIE_SAMESITE'] = 'Strict'  # Protect against CSRF attacks
+login_manager.session_protection = "strong"  # Use strong protection for session security
 
 # Load user from the db
 @login_manager.user_loader
@@ -85,6 +91,7 @@ def index():
 
 @app.route('/logout')
 def logout():
+    logout_user()
     session.clear()
     return redirect(url_for('index'))
 
@@ -120,7 +127,12 @@ def register():
     
     return render_template('register.html')
 
+#------ End of SELF REGISTRATION ------ #
+
+limiter = Limiter(app, key_func=request.remote_addr)
+
 @app.route('/login', methods=['POST'])
+@limiter.limit("5 per minute")
 def login():
     if request.method == 'POST':
         username = request.form['username']
@@ -134,6 +146,7 @@ def login():
                 if user and bcrypt.check_password_hash(user.password_hash, password):
                     # If the user is found and the password matches, log the user in
                     login_user(user)  # This stores user.id in the session, not the username
+                    session.pop('_flashes', None)  # Remove any flash messages that might remain
                     flash('Logged in successfully!', 'success')
                     return redirect(url_for('index'))                
                 else:
@@ -146,7 +159,10 @@ def login():
             flash('User not found', 'danger')
     return redirect(url_for('index'))
 
-#------ End of SELF REGISTRATION ------ #
+@app.before_request
+def before_request():
+    session.modified = True  # Ensure session is updated on each request
+
 
 #------ GOOGLE LOGIN ------#
 
