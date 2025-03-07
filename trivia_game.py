@@ -130,19 +130,20 @@ def login():
         user = User.query.filter_by(username=username).first()
 
         if user:
-            if user.password:  # Check if a password exists (i.e., non-Google user)
+            if user.password_hash:  # Check if a password exists (i.e., non-Google user)
                 if user and bcrypt.check_password_hash(user.password_hash, password):
                     # If the user is found and the password matches, log the user in
                     login_user(user)  # This stores user.id in the session, not the username
                     flash('Logged in successfully!', 'success')
                     return redirect(url_for('index'))                
+                else:
+                        flash('Invalid password', 'danger')
+                        return redirect(url_for('index'))
             else:
-                    flash('Invalid password', 'danger')
-                    return redirect(url_for('login'))
+                flash('This account uses Google Login. Please sign in with Google.', 'warning')
+                return redirect(url_for('index'))
         else:
-            flash('This account uses Google Login. Please sign in with Google.', 'warning')
-            return redirect(url_for('login'))
-    flash('User not found', 'danger')
+            flash('User not found', 'danger')
     return redirect(url_for('index'))
 
 #------ End of SELF REGISTRATION ------ #
