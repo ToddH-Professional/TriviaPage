@@ -103,6 +103,11 @@ def register():
             flash('Username or email already exists', 'danger')
             return redirect(url_for('register'))
         
+        # Ensure the password field is not empty
+        if not password:
+            flash('Password is required', 'danger')
+            return redirect(url_for('register'))
+        
         # Create new user and add to DB
         new_user = User(username=username, email=email, score=0)
         new_user.set_password(password)  # Hash using bcrypt
@@ -123,16 +128,21 @@ def login():
     
         # Find user in the database
         user = User.query.filter_by(username=username).first()
-    
-        if user and bcrypt.check_password_hash(user.password_hash, password):
-            # If the user is found and the password matches, log the user in
-            login_user(user)  # This stores user.id in the session, not the username
-            flash('Logged in successfully!', 'success')
-            return redirect(url_for('index'))
-            
-        flash('Invalid credentials', 'danger')
-        return redirect(url_for('index'))
 
+        if user:
+            if user.password:  # Check if a password exists (i.e., non-Google user)
+                if user and bcrypt.check_password_hash(user.password_hash, password):
+                    # If the user is found and the password matches, log the user in
+                    login_user(user)  # This stores user.id in the session, not the username
+                    flash('Logged in successfully!', 'success')
+                    return redirect(url_for('index'))                
+            else:
+                    flash('Invalid password', 'danger')
+                    return redirect(url_for('login'))
+        else:
+            flash('This account uses Google Login. Please sign in with Google.', 'warning')
+            return redirect(url_for('login'))
+    flash('User not found', 'danger')
     return redirect(url_for('index'))
 
 #------ End of SELF REGISTRATION ------ #
@@ -410,7 +420,7 @@ def answer():
         session.modified = True  # Ensure session updates are saved 
     else:
         score = user.score
-        
+
     # Commit the score to the db
     db.session.commit()
     return render_template('answer.html', 
