@@ -172,7 +172,7 @@ def before_request():
 
 
 #------ GOOGLE LOGIN ------#
-
+'''
 # Determine the redirect URI based on environment
 redirect_uri = 'https://' + os.getenv('RAILWAY_PUBLIC_DOMAIN') + '/callback'
 
@@ -275,6 +275,7 @@ def callback():
     flash('Logged in successfully with Google!', 'success')
 
     return redirect(url_for('index'))
+'''
 #------ End of GOOGLE LOGIN ------#
 
 #------ This is the database section -----#

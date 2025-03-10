@@ -18,10 +18,14 @@
 
     {% else %}
     
-    <form action="{{ url_for('googlelogin') }}" method="get">
-        <button type="submit" class="btn btn-primary">Login with Google</button>
-    </form> 
-       
+    {% try %}
+        <form action="{{ url_for('googlelogin') }}" method="get">
+            <button type="submit" class="btn btn-primary">Login with Google</button>
+        </form> 
+    {% except %}
+        <!-- Google login route does not exist, so don't show the button -->
+    {% endtry %}
+
     <form action="{{ url_for('register') }}" method="get">
         <button type="submit" class="btn btn-primary">Register for an account </button>            
     </form>
