@@ -221,8 +221,7 @@ def googlelogin():
         include_granted_scopes='true'
     )
     session['state'] = state
-    logger.info(f"Generated state in /googlelogin: {state}")
-    logger.info(f"Session state before redirecting: {session.get('state')}")
+    logger.info(f"Session after setting state in /googlelogin: {session}")
 
     return redirect(authorization_url)
 
