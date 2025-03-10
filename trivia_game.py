@@ -8,8 +8,6 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from flask_bcrypt import Bcrypt
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_migrate import Migrate
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 from flask_session import Session
 from datetime import timedelta
 
@@ -176,11 +174,7 @@ def before_request():
 #------ GOOGLE LOGIN ------#
 
 # Determine the redirect URI based on environment
-if os.getenv('RAILWAY_PUBLIC_DOMAIN'):
-    redirect_uri = 'https://' + os.getenv('RAILWAY_PUBLIC_DOMAIN') + '/callback'
-else:
-    # Default for local development
-    redirect_uri = 'https://8c86-68-97-137-104.ngrok-free.app/callback'
+redirect_uri = 'https://' + os.getenv('RAILWAY_PUBLIC_DOMAIN') + '/callback'
 
 # Determine which credentials file to use
 if os.getenv('GOOGLE_APPLICATION_CREDENTIALS'):
@@ -195,8 +189,7 @@ if os.getenv('GOOGLE_APPLICATION_CREDENTIALS'):
   
     # Define your project ID and secret name
     #client_secret = os.getenv('GOOGLE_CLIENT_SECRET')
-    client_id = os.getenv('GOOGLE_CLIENT_ID')
-    
+    client_id = os.getenv('GOOGLE_CLIENT_ID')    
 
     # Build the secret name path
     name = f"projects/364391087897/secrets/triviapage-oauth-secret/versions/latest"
@@ -232,7 +225,15 @@ def googlelogin():
     return redirect(authorization_url)
 
 @app.route('/callback')
-def callback():
+def callback():   
+    # Ensure the state matches
+    state_from_request = request.args.get('state')
+    state_from_session = session.get('state')
+
+    if state_from_request != state_from_session:
+        flash("OAuth state mismatch. Potential CSRF detected!", "danger")
+        return redirect(url_for("index"))
+
     # Initialize OAuth2 flow
     flow = Flow.from_client_secrets_file(
         client_secret_file,
