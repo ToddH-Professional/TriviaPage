@@ -221,7 +221,9 @@ def googlelogin():
         include_granted_scopes='true'
     )
     session['state'] = state
-    logger.info(f"Session after setting state: {session}")
+    logger.info(f"Generated state in /googlelogin: {state}")
+    logger.info(f"Session state before redirecting: {session.get('state')}")
+
     return redirect(authorization_url)
 
 @app.route('/callback')
@@ -229,7 +231,9 @@ def callback():
     # Ensure the state matches
     state_from_request = request.args.get('state')
     state_from_session = session.get('state')
-
+    logger.info(f"Received state in /callback: {request.args.get('state')}")
+    logger.info(f"Session state at /callback: {session.get('state')}")
+    
     if state_from_request != state_from_session:
         flash("OAuth state mismatch. Potential CSRF detected!", "danger")
         return redirect(url_for("index"))
@@ -252,11 +256,8 @@ def callback():
     ) 
 
     user_info = response.json()
-
-    # Needs CSRF protection
-    #     
     email = user_info.get('email')
-    username = user_info.get('name')  # Or use 'email' as username if you prefer
+    username = user_info.get('name')
 
     # Check if user already exists
     user = User.query.filter_by(email=email).first()
