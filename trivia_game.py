@@ -251,6 +251,7 @@ def callback():
     ) 
 
     user_info = response.json()
+
     # Needs CSRF protection
     #     
     email = user_info.get('email')
@@ -278,11 +279,8 @@ def callback():
 #------ This is the database section -----#
 
 # Load database URL from environment
-if os.getenv('DATABASE_URL'):
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv('DATABASE_URL')      
-else:
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_PUBLIC_URL") 
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_PUBLIC_URL") 
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # Initialize the database with the app
 db.init_app(app)
