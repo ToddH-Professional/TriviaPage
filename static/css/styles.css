@@ -133,6 +133,19 @@ h2 {
     margin-bottom: 25px;
 }
 
+footer {
+    text-align: center;
+    width: 100%;
+    font-size: 0.9em;  /* Smaller text */
+    color: #ffffff;
+    opacity: 0.8;
+    position: fixed;  /* Keeps it at the bottom */
+    bottom: 0;
+    left: 0;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.2); /* Subtle background for visibility */
+}
+
 a {
     color: #00b4d8;
     text-decoration: none;
