@@ -7,10 +7,9 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
-<body>
-    <div class="container">
+<body>    
+    <div class="container">       
         <h1>Welcome to the Trivia Game!</h1>
-
         {% if current_user.is_authenticated %}
             <h2>Welcome, {{ current_user.username }}!</h2>
             <div class="card">
@@ -49,8 +48,8 @@
             {% endif %}
         {% endwith %}
     </div>
+    <footer>
+        <p>Powered by <a href="https://the-trivia-api.com" target="_blank">The Trivia API</a></p>
+    </footer>
 </body>
-<footer>
-    <p>Powered by <a href="https://the-trivia-api.com" target="_blank">The Trivia API</a></p>
-</footer>
 </html>

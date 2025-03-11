@@ -11,10 +11,12 @@ body {
     color: #333;
     line-height: 1.6;
     padding: 20px;
-    height: 100vh; /* Ensure body fills the height of the screen */
+    height: 100vh; /* Full viewport height */
     display: flex;
+    margin: 0;
     justify-content: center; /* Center horizontally */
     align-items: center; /* Center vertically */
+    background-color: #f4f4f4;
 }
 
 .container {
@@ -40,7 +42,13 @@ body {
 }
 
 /* Title and subtitles */
-h1, h2 {
+h1 {
+    color: #ffffff;
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 20px;
+}
+h2 {
     color: #ffffff;
     text-align: center;
     margin-bottom: 20px;
@@ -104,11 +112,13 @@ button:focus {
     font-size: 1.2em;
     color: #FFD700; /* Gold for better contrast */
     text-align: center;
-    margin-top: 20px;
+    margin: 20px auto; /* Centers it horizontally */
     font-weight: bold;
     background: rgba(0, 0, 0, 0.2); /* Light background for readability */
     padding: 10px;
     border-radius: 5px;
+    width: fit-content; /* Shrinks to fit content width */
+    max-width: 80%; /* Prevents it from being too wide on larger screens */
 }
 
 /* Link to redirect to login */
@@ -126,16 +136,6 @@ button:focus {
     text-decoration: underline;
 }
 
-h1 {
-    font-size: 2.5rem;
-    margin-bottom: 15px;
-    font-weight: 700;
-}
-
-h2 {
-    font-size: 2rem;
-    margin-bottom: 25px;
-}
 
 footer {
     text-align: center;
@@ -237,15 +237,27 @@ ul li {
 /* Responsive layout */
 @media (max-width: 768px) {
     .container {
-        padding: 15px;
-    }
+        display: flex;
+        flex-direction: column; /* Stack elements vertically */
+        justify-content: center; /* Center content vertically */
+        align-items: center; /* Center content horizontally */
+        text-align: center;
+        width: 100%;
+        max-width: 400px; /* Restrict width to prevent it from stretching */
+    }    
     .title {
         font-size: 1.7rem;
     }
     .card {
         width: 100%;
-        padding: 15px;
+        max-width: 300px; /* Ensure the card has a fixed max width */
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        text-align: center;
     }
+  
     .score-heading,
     .next-question-heading,
     .next-category-heading {
