@@ -102,9 +102,13 @@ button:focus {
 /* Flash message styling */
 .flash {
     font-size: 1.2em;
-    color: #28a745; /* Green for success */
+    color: #FFD700; /* Gold for better contrast */
     text-align: center;
     margin-top: 20px;
+    font-weight: bold;
+    background: rgba(0, 0, 0, 0.2); /* Light background for readability */
+    padding: 10px;
+    border-radius: 5px;
 }
 
 /* Link to redirect to login */
