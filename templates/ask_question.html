@@ -4,16 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ask Question</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
-    <h2>{{ question.text }}</h2>
+    <div class="container">
+        <h2 class="question">{{ question.text }}</h2>
 
-    <form method="POST" action="/answer" id="nextQuestionForm">
-        {% for answer in answers %}
-            <input type="radio" name="answer" value="{{ answer }}" required> {{ answer }}<br>
-        {% endfor %}
-        <button type="submit" id="nextQuestionBtn">Submit Answer</button>
-    </form>
+        <form method="POST" action="/answer" id="nextQuestionForm">
+            <div class="answers">
+                {% for answer in answers %}
+                    <label>
+                        <input type="radio" name="answer" value="{{ answer }}" required> {{ answer }}
+                    </label><br>
+                {% endfor %}
+            </div>
+            <button type="submit" id="nextQuestionBtn" class="btn btn-primary">Submit Answer</button>
+        </form>
+    </div>
+
     <script>
         document.getElementById("nextQuestionForm").addEventListener("submit", function() {
             document.getElementById("nextQuestionBtn").disabled = true;

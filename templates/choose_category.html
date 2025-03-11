@@ -2,30 +2,44 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Choose Category</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
-    <form method="post" action="{{ url_for('choose_category') }}">
-        <label for="category">Choose a category:</label>
-        <select id="category" name="category" required>
-            {% for category in categories %}
-                <option value="{{ category.name }}">{{ category.displayname }}</option>
-            {% endfor %}
-        </select>
-        <br>
-        <ul>
-            <li>Easy is 1 point</li>
-            <li>Medium is 2 points</li>
-            <li>Hard is 3 points</li>
-        </ul>
-        <label for="difficulty">Choose difficulty:</label>
-        <select name="difficulty" id="difficulty" required>
-            <option value="easy">Easy</option>
-            <option value="medium">Medium</option>
-            <option value="hard">Hard</option>
-        </select>
-        <br>
-        <button type="submit">Next</button>
-    </form>
+    <div class="container">
+        <h1>Choose a Category</h1>
+        
+        <div class="card">
+            <form method="post" action="{{ url_for('choose_category') }}">
+                <label for="category">Choose a category:</label>
+                <select id="category" name="category" required>
+                    {% for category in categories %}
+                        <option value="{{ category.name }}">{{ category.displayname }}</option>
+                    {% endfor %}
+                </select>
+                <br>
+                
+                <div class="difficulty-info">
+                    <ul>
+                        <li>Easy is 1 point</li>
+                        <li>Medium is 2 points</li>
+                        <li>Hard is 3 points</li>
+                    </ul>
+                </div>
+
+                <label for="difficulty">Choose difficulty:</label>
+                <select name="difficulty" id="difficulty" required>
+                    <option value="easy">Easy</option>
+                    <option value="medium">Medium</option>
+                    <option value="hard">Hard</option>
+                </select>
+                <br>
+                
+                <button type="submit" class="btn btn-primary">Next</button>
+            </form>
+        </div>
+    </div>
 </body>
 </html>

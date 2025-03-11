@@ -3,41 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Answer</title>
+    <title>Answer Result</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
-    <h1>Answer Result</h1>
+    <div class="container">
+        <h1 class="title">Answer Result</h1>
 
-    {% if request.form['answer'] == correctAnswer %}
-        <p style="color: green;">Correct! 🎉</p>
-    {% else %}
-        <p style="color: red;">Incorrect. The correct answer was: <strong>{{ correctAnswer }}</strong></p>
-    {% endif %}
-    <h2>Score:</h2>
-    <p>Score: {{ score }}</p>
-    <h4>Next question from the same category:</h4>
-    <form action="{{ url_for('ask_question') }}" method="get" id="nextQuestionForm">
-        <button type="submit" id="nextQuestionBtn">Next Question</button>
-    </form>
+        {% if request.form['answer'] == correctAnswer %}
+            <p class="result correct"><strong>Correct!</strong> 🎉</p>
+        {% else %}
+            <p class="result incorrect">Incorrect. The correct answer was: <strong>{{ correctAnswer }}</strong></p>
+        {% endif %}
+
+        <p class="score">Score: {{ score }}</p>
+
+        <h4 class="next-question-heading">Next question from the same category:</h4>
+        <form action="{{ url_for('ask_question') }}" method="get" id="nextQuestionForm">
+            <button type="submit" id="nextQuestionBtn" class="btn btn-primary">Next Question</button>
+        </form>
+
+        <h4 class="next-category-heading">Or choose a new category:</h4>
+        <form action="{{ url_for('choose_category') }}" method="get" id="nextCategoryForm">
+            <button type="submit" id="nextCategoryBtn" class="btn btn-primary">Choose Category</button>
+        </form>
+
+        <hr>
+
+        <form action="{{ url_for('logout') }}" method="get" id="indexForm">
+            <button type="submit" id="indexBtn" class="btn btn-primary">Logout</button>
+        </form>
+    </div>
+
     <script>
         document.getElementById("nextQuestionForm").addEventListener("submit", function() {
             document.getElementById("nextQuestionBtn").disabled = true;
         });
-    </script>
-    <h4>Or Choose a new category:</h4>
-    <form action="{{ url_for('choose_category') }}" method="get" id="nextCategoryForm">
-        <button type="submit" id="nextCategoryBtn">Choose Category</button>
-    </form>
-    <script>
+
         document.getElementById("nextCategoryForm").addEventListener("submit", function() {
             document.getElementById("nextCategoryBtn").disabled = true;
         });
-    </script>
-    <hr>
-    <form action="{{ url_for('logout') }}" method="get" id="indexForm">
-        <button type="submit" id="indexBtn">Logout</button>
-    </form>
-    <script>
+
         document.getElementById("indexForm").addEventListener("submit", function() {
             document.getElementById("indexBtn").disabled = true;
         });

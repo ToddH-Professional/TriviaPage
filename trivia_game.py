@@ -403,7 +403,6 @@ def ask_question():
 
 @app.route('/answer', methods=['GET', 'POST'])
 def answer():
-    logger.info(f"Session Data: { session['difficulty'] }")  
     # In case someone goes directly to the page
     if request.method == ['GET'] :
         return redirect(url_for('index'))

@@ -1,12 +1,31 @@
-<form action="{{ url_for('register') }}" method="POST">
-    <label for="username">Username:</label>
-    <input type="text" name="username" id="username" required><br>
-    
-    <label for="email">Email:</label>
-    <input type="email" name="email" id="email" required><br>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Create an Account</h1>
+        <form action="{{ url_for('register') }}" method="POST" class="form">
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" name="username" id="username" required class="form-control">
+            </div>
 
-    <label for="password">Password:</label>
-    <input type="password" name="password" id="password" required><br>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" name="email" id="email" required class="form-control">
+            </div>
 
-    <button type="submit">Register</button>
-</form>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" name="password" id="password" required class="form-control">
+            </div>
+
+            <button type="submit" class="btn btn-primary">Register</button>
+        </form>
+        <p class="redirect-link">Already have an 
