@@ -30,6 +30,14 @@
             <button type="submit" class="btn btn-primary" id="registerbtn">Register</button>
         </form>
         <p class="redirect-link"><a href="{{ url_for('index') }}">Already have an account?</a></p>
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="flash">
+                {% for message in messages %}
+                    <p>{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
     </div>
     <script>
         document.getElementById("register").addEventListener("submit", function(event) {
