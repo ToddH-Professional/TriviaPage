@@ -10,6 +10,10 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from flask_migrate import Migrate
 from flask_session import Session
 from datetime import timedelta
+from flask_wtf.csrf import CSRFProtect
+from flask_wtf import FlaskForm
+from wtforms import StringField, PasswordField, SubmitField
+from wtforms.validators import InputRequired
 
 import requests
 import random
@@ -18,6 +22,7 @@ import logging
 import json
 import os
 import re
+import secrets
 
 # Load environment variables from .env file
 load_dotenv()
@@ -33,18 +38,38 @@ login_manager.login_view = 'index'
 
 app.config['SESSION_COOKIE_SECURE'] = True  # Ensure cookies are only sent over HTTPS
 app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent JavaScript access to cookies
-app.config['SESSION_COOKIE_SAMESITE'] = 'Strict'  # Protect against CSRF attacks
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Protect against CSRF attacks
 app.config['SESSION_TYPE'] = 'filesystem'  # Stores sessions on disk
-app.config['SESSION_PERMANENT'] = True
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
+app.config['SESSION_USE_SIGNER'] = True  # Prevents tampering
+app.config['SESSION_PERMANENT'] = True # Keeps sessions
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30) # But only for 30 mins
+app.config['SECRET_KEY'] = os.getenv('FLASK_SECRET_KEY')
+app.config['WTF_CSRF_ENABLED'] = True 
+
 Session(app)
 
+# CSRF Protection
+#csrf = CSRFProtect(app)
+
 login_manager.session_protection = "strong"  # Use strong protection for session security
+
+#------ This is the database section -----#
 
 # Load user from the db
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))  # Get the user by ID from the database
+
+# Load database URL from environment
+app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_PUBLIC_URL") 
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+# Initialize the database with the app
+db.init_app(app)
+migrate = Migrate(app, db)
+
+#------ END OF DB FUNCTIONS ------#
+
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -90,10 +115,16 @@ if not logger.hasHandlers():
 # Initialize the players' score
 player_score = {}
 
+class LoginForm(FlaskForm):
+    username = StringField('Username', validators=[InputRequired()])
+    password = PasswordField('Password', validators=[InputRequired()])
+    submit = SubmitField('Login')
+
 # The index page
 @app.route('/', methods=['GET'])
-def index():
-    return render_template('index.html') # Render the index page if it's a GET request
+def index(): 
+    form = LoginForm() 
+    return render_template('index.html', form=form) 
 
 @app.route('/logout')
 def logout():
@@ -106,33 +137,35 @@ def logout():
    
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    if request.method == 'POST':
-        username = request.form['username']
-        email = request.form['email']
-        password = request.form['password']
-        
-        # Check if the username or email already exists
-        existing_user = User.query.filter((User.username == username) | (User.email == email)).first()
-        if existing_user:
-            flash('Username or email already exists', 'danger')
-            return redirect(url_for('register'))
-        
-        # Ensure the password field is not empty
-        if not password:
-            flash('Password is required', 'danger')
-            return redirect(url_for('register'))
-        
-        # Create new user and add to DB
-        new_user = User(username=username, email=email, score=0)
-        new_user.set_password(password)  # Hash using bcrypt
+    form = LoginForm()   
+    if form.validate_on_submit():
+        if request.method == 'POST':
+            username = request.form['username']
+            email = request.form['email']
+            password = request.form['password']
+            
+            # Check if the username or email already exists
+            existing_user = User.query.filter((User.username == username) | (User.email == email)).first()
+            if existing_user:
+                flash('Username or email already exists', 'danger')
+                return redirect(url_for('register'))
+            
+            # Ensure the password field is not empty
+            if not password:
+                flash('Password is required', 'danger')
+                return redirect(url_for('register'))
+            
+            # Create new user and add to DB
+            new_user = User(username=username, email=email, score=0)
+            new_user.set_password(password)  # Hash using bcrypt
 
-        db.session.add(new_user)
-        db.session.commit()
-        
-        flash('Account created successfully! You can now log in.', 'success')
-        return redirect(url_for('index'))
+            db.session.add(new_user)
+            db.session.commit()
+            
+            flash('Account created successfully! You can now log in.', 'success')
+            return redirect(url_for('index'))
     
-    return render_template('register.html')
+    return render_template('register.html', form=form)
 
 #------ End of SELF REGISTRATION ------ #
 
@@ -140,10 +173,12 @@ def register():
 
 @app.route('/login', methods=['POST'])
 #@limiter.limit("5 per minute")  
-def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+def login():  
+    form = LoginForm()   
+    if form.validate_on_submit():
+        # Process the form if it is valid
+        username = form.username.data
+        password = form.password.data
     
         # Find user in the database
         user = User.query.filter_by(username=username).first()
@@ -167,8 +202,10 @@ def login():
     return redirect(url_for('index'))
 
 @app.before_request
-def before_request():
-    session.modified = True  # Ensure session is updated on each request
+def set_csrf_token():
+    if 'csrf_token' not in session:
+        session['csrf_token'] = secrets.token_hex(16)
+        logger.info(f"CSRF Token Created: {session['csrf_token']}")
 
 
 #------ GOOGLE LOGIN ------#
@@ -278,17 +315,7 @@ def callback():
 '''
 #------ End of GOOGLE LOGIN ------#
 
-#------ This is the database section -----#
 
-# Load database URL from environment
-app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_PUBLIC_URL") 
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
-# Initialize the database with the app
-db.init_app(app)
-migrate = Migrate(app, db)
-
-#------ END OF DB FUNCTIONS ------#
 
 # Create a player session
 def initialize_player_session(username):

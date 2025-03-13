@@ -25,15 +25,15 @@
                 <form action="{{ url_for('register') }}" method="get">
                     <button type="submit">Register for an account</button>
                 </form>
-
-                <form action="{{ url_for('login') }}" method="POST">
+                <form action="{{ url_for('login') }}" method="post">
+                    {{ form.hidden_tag() }}
                     <label for="username">Username:</label>
-                    <input type="text" name="username" id="username" required><br>
+                    {{ form.username() }}
                     
                     <label for="password">Password:</label>
-                    <input type="password" name="password" id="password" required><br>
+                    {{ form.password() }}
 
-                    <button type="submit">Login</button>
+                    {{ form.submit(class_='form-button') }}
                 </form>
             </div>
         {% endif %}
