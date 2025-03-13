@@ -31,13 +31,15 @@
         </form>
         <p class="redirect-link"><a href="{{ url_for('index') }}">Already have an account?</a></p>
         {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            <div class="flash">
-                {% for message in messages %}
-                    <p>{{ message }}</p>
-                {% endfor %}
-            </div>
-        {% endif %}
+            {% if messages %}
+                <div class="flash">
+                    {% for message in messages %}
+                        <p>{{ message }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
     </div>
     <script>
         document.getElementById("register").addEventListener("submit", function(event) {
