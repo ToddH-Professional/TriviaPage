@@ -99,7 +99,7 @@ class MaskSensitiveData(logging.Filter):
         return log_message
 
 # Apply the filter to your logger
-logger.setLevel(logging.DEBUG)  # Keep debug mode on
+#logger.setLevel(logging.DEBUG)  # Keep debug mode on
 mask_filter = MaskSensitiveData()
 
 # Apply filter to all handlers
@@ -107,11 +107,11 @@ for handler in logger.handlers:
     handler.addFilter(mask_filter)
 
 # If no handlers exist, create one
-if not logger.hasHandlers():
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.DEBUG)
-    console_handler.addFilter(mask_filter)
-    logger.addHandler(console_handler)
+#if not logger.hasHandlers():
+#    console_handler = logging.StreamHandler()
+#    console_handler.setLevel(logging.DEBUG)
+#    console_handler.addFilter(mask_filter)
+#    logger.addHandler(console_handler)
 
     
 # Initialize the players' score
@@ -487,4 +487,4 @@ def answer():
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()  # Create all tables if they don't exist
-    app.run(debug=True)
+    app.run(debug=False)
