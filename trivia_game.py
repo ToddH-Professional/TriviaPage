@@ -14,6 +14,8 @@ from flask_wtf.csrf import CSRFProtect
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import InputRequired
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 import requests
 import random
@@ -169,10 +171,10 @@ def register():
 
 #------ End of SELF REGISTRATION ------ #
 
-#limiter = Limiter(app, key_func=get_remote_address)
+limiter = Limiter(app)
 
 @app.route('/login', methods=['POST'])
-#@limiter.limit("5 per minute")  
+@limiter.limit("5 per minute")  
 def login():  
     form = LoginForm()   
     if form.validate_on_submit():

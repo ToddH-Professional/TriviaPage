@@ -10,7 +10,7 @@
 <body>
     <div class="container">
         <h1>Create an Account</h1>
-        <form action="{{ url_for('register') }}" method="POST" class="form">
+        <form action="{{ url_for('register') }}" method="POST" class="form" id="register">
             {{ form.hidden_tag() }}
             <div class="form-group">
                 <label for="username">Username:</label>
@@ -27,12 +27,20 @@
                 <input type="password" name="password" id="password" required class="form-control">
             </div>
 
-            <button type="submit" class="btn btn-primary">Register</button>
+            <button type="submit" class="btn btn-primary" id="registerbtn">Register</button>
         </form>
         <p class="redirect-link"><a href="{{ url_for('index') }}">Already have an account?</a></p>
     </div>
+    <script>
+        document.getElementById("register").addEventListener("submit", function(event) {
+            const submitButton = document.getElementById("registerbtn");
+            submitButton.disabled = true;
+            submitButton.innerText = "Submitting..."; // Change button text
+        });
+    </script>
+    <footer>
+        <p>Powered by <a href="https://the-trivia-api.com" target="_blank">The Trivia API</a></p>
+    </footer>
 </body>
-<footer>
-    <p>Powered by <a href="https://the-trivia-api.com" target="_blank">The Trivia API</a></p>
-</footer>
+
 </html>

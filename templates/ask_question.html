@@ -22,14 +22,16 @@
             <button type="submit" id="nextQuestionBtn" class="btn btn-primary">Submit Answer</button>
         </form>
     </div>
-
     <script>
-        document.getElementById("nextQuestionForm").addEventListener("submit", function() {
-            document.getElementById("nextQuestionBtn").disabled = true;
-        });
+        document.getElementById("nextQuestionForm").addEventListener("submit", function(event) {
+            const submitButton = document.getElementById("nextQuestionBtn");
+            submitButton.disabled = true;
+            submitButton.innerText = "Submitting..."; // Change button text
+        }); 
     </script>
+    <footer>
+        <p>Powered by <a href="https://the-trivia-api.com" target="_blank">The Trivia API</a></p>
+    </footer>
 </body>
-<footer>
-    <p>Powered by <a href="https://the-trivia-api.com" target="_blank">The Trivia API</a></p>
-</footer>
+
 </html>

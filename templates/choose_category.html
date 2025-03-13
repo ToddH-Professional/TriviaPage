@@ -12,7 +12,7 @@
         <h1>Choose a Category</h1>
         
         <div class="card">
-            <form method="post" action="{{ url_for('choose_category') }}">
+            <form method="post" action="{{ url_for('choose_category') }}" id="choose_category">
                 <label for="category">Choose a category:</label>
                 <select id="category" name="category" required>
                     {% for category in categories %}
@@ -37,12 +37,20 @@
                 </select>
                 <br>
                 
-                <button type="submit" class="btn btn-primary">Next</button>
+                <button type="submit" class="btn btn-primary" id="choose_categorybtn">Next</button>
             </form>
         </div>
     </div>
+    <script>
+        document.getElementById("choose_category").addEventListener("submit", function(event) {
+            const submitButton = document.getElementById("choose_categorybtn");
+            submitButton.disabled = true;
+            submitButton.innerText = "Submitting..."; // Change button text
+        }); 
+    </script>
+    <footer>
+        <p>Powered by <a href="https://the-trivia-api.com" target="_blank">The Trivia API</a></p>
+    </footer>
 </body>
-<footer>
-    <p>Powered by <a href="https://the-trivia-api.com" target="_blank">The Trivia API</a></p>
-</footer>
+
 </html>

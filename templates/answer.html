@@ -37,20 +37,25 @@
     </div>
 
     <script>
-        document.getElementById("nextQuestionForm").addEventListener("submit", function() {
-            document.getElementById("nextQuestionBtn").disabled = true;
+        document.getElementById("nextQuestionForm").addEventListener("submit", function(event) {
+            const submitButton = document.getElementById("nextQuestionBtn");
+            submitButton.disabled = true;
+            submitButton.innerText = "Submitting..."; // Change button text
+        }); 
+        document.getElementById("nextCategoryForm").addEventListener("submit", function(event) {
+            const submitButton = document.getElementById("nextCategoryBtn");
+            submitButton.disabled = true;
+            submitButton.innerText = "Submitting..."; // Change button text
         });
-
-        document.getElementById("nextCategoryForm").addEventListener("submit", function() {
-            document.getElementById("nextCategoryBtn").disabled = true;
-        });
-
-        document.getElementById("indexForm").addEventListener("submit", function() {
-            document.getElementById("indexBtn").disabled = true;
+        document.getElementById("indexForm").addEventListener("submit", function(event) {
+            const submitButton = document.getElementById("indexBtn");
+            submitButton.disabled = true;
+            submitButton.innerText = "Submitting..."; // Change button text
         });
     </script>
+    <footer>
+        <p>Powered by <a href="https://the-trivia-api.com" target="_blank">The Trivia API</a></p>
+    </footer>
 </body>
-<footer>
-    <p>Powered by <a href="https://the-trivia-api.com" target="_blank">The Trivia API</a></p>
-</footer>
+
 </html>

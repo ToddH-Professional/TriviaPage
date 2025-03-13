@@ -13,19 +13,19 @@
         {% if current_user.is_authenticated %}
             <h2>Welcome, {{ current_user.username }}!</h2>
             <div class="card">
-                <form action="{{ url_for('choose_category') }}" method="get">
-                    <button type="submit">Start Game</button>
+                <form action="{{ url_for('choose_category') }}" method="get" id="choose_category">
+                    <button type="submit" id="choose_categorybtn">Start Game</button>
                 </form>
-                <form action="{{ url_for('logout') }}" method="get">
-                    <button type="submit">Logout</button>
+                <form action="{{ url_for('logout') }}" method="get" id="logout">
+                    <button type="submit" id="logoutbtn">Logout</button>
                 </form>
             </div>
         {% else %}
             <div class="card">
-                <form action="{{ url_for('register') }}" method="get">
-                    <button type="submit">Register for an account</button>
+                <form action="{{ url_for('register') }}" method="get" id="register">
+                    <button type="submit" id="registerbtn">Register for an account</button>
                 </form>
-                <form action="{{ url_for('login') }}" method="post">
+                <form action="{{ url_for('login') }}" method="post" id="login">
                     {{ form.hidden_tag() }}
                     <label for="username">Username:</label>
                     {{ form.username() }}
@@ -48,6 +48,24 @@
             {% endif %}
         {% endwith %}
     </div>
+    <script>
+        document.getElementById("choose_category").addEventListener("submit", function(event) {
+            const submitButton = document.getElementById("choose_categorybtn");
+            submitButton.disabled = true;
+            submitButton.innerText = "Submitting..."; // Change button text
+        });    
+        document.getElementById("logout").addEventListener("submit", function(event) {
+            const submitButton = document.getElementById("logoutbtn");
+            submitButton.disabled = true;
+            submitButton.innerText = "Submitting..."; // Change button text
+        });  
+        document.getElementById("register").addEventListener("submit", function(event) {
+            const submitButton = document.getElementById("registerbtn");
+            submitButton.disabled = true;
+            submitButton.innerText = "Submitting..."; // Change button text
+            this.submit()
+        }); 
+    </script>
     <footer>
         <p>Powered by <a href="https://the-trivia-api.com" target="_blank">The Trivia API</a></p>
     </footer>
