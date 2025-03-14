@@ -1,21 +1,18 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from dotenv import load_dotenv
-from google.cloud import secretmanager
-from google.auth import credentials
-from google_auth_oauthlib.flow import Flow
+#from google.cloud import secretmanager
+#from google.auth import credentials
+#from google_auth_oauthlib.flow import Flow
 from database import db, User
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from flask_login import LoginManager, login_user, logout_user, current_user
 from flask_bcrypt import Bcrypt
-from werkzeug.security import generate_password_hash, check_password_hash
 from flask_migrate import Migrate
 from flask_session import Session
 from datetime import timedelta
-from flask_wtf.csrf import CSRFProtect
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import InputRequired
 from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 
 import requests
 import random
@@ -62,7 +59,7 @@ login_manager.session_protection = "strong"  # Use strong protection for session
 def load_user(user_id):
     return User.query.get(int(user_id))  # Get the user by ID from the database
 
-# Load database URL from environment
+# Load database URL from environment # Change the env when deploying to dev
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_PUBLIC_URL") 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
@@ -192,7 +189,7 @@ def login():
                     login_user(user)  # This stores user.id in the session, not the username
                     session.pop('_flashes', None)  # Remove any flash messages that might remain
                     flash('Logged in successfully!', 'success')
-                    return redirect(url_for('index'))                
+                    return redirect(url_for('choose_category'))                
                 else:
                         flash('Invalid password', 'danger')
                         return redirect(url_for('index'))

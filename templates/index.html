@@ -8,11 +8,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>    
-    <div class="container">       
-        <h1>Welcome to the Trivia Game!</h1>
-        {% if current_user.is_authenticated %}
-            <h2>Welcome, {{ current_user.username }}!</h2>
+    <div class="container">          
+        {% if current_user.is_authenticated %}            
             <div class="card">
+                <h1>Welcome to the Trivia Game!</h1>
+                <h2>Welcome, {{ current_user.username }}!</h2>
                 <form action="{{ url_for('choose_category') }}" method="get" id="choose_category">
                     <button type="submit" id="choose_categorybtn">Start Game</button>
                 </form>
@@ -22,6 +22,7 @@
             </div>
         {% else %}
             <div class="card">
+                <h1>Welcome to the Trivia Game!</h1>
                 <form action="{{ url_for('register') }}" method="get" id="register">
                     <button type="submit" id="registerbtn">Register for an account</button>
                 </form>

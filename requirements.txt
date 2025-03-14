@@ -2,11 +2,7 @@ requests
 flask
 gunicorn
 python-dotenv
-google-auth
 flask-session
-google-auth-oauthlib
-google-auth-httplib2
-google-cloud-secret-manager
 flask-sqlalchemy
 psycopg2-binary
 flask-login
