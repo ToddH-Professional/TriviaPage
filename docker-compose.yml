@@ -1,7 +1,5 @@
-version: '3.8'
-
 services:
-  db:
+  db:  
     image: postgres:13
     container_name: dev_postgres
     environment:
@@ -12,23 +10,29 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-
-  data_import:
-    build:
+    networks:
+    - app_network
+  app:
+    build: 
       context: .
-      dockerfile: Dockerfile  # We will define a simple Dockerfile to run the script
+      dockerfile: dockerfile.dev
     depends_on:
       - db
+    container_name: trivia_app
+    ports:
+      - "8080:8080"
     environment:
-      DATABASE_URL: postgresql://your_db_user:your_db_password@db:5432/your_db_name
-    command: python import_data.py  # Run the data import script when the container starts
-    volumes:
-      - ./import_data.py:/app/import_data.py  # Mount your Python script to the container
-      - ./data.json:/app/data.json  # Mount your data file (if using a local file)
-
-  # Other services (e.g., your application) can go here
+      - FLASK_SECRET_KEY
+      - DATABASE_PUBLIC_URL
+      - FLASK_APP=trivia_game.py  
+    command: bash -c "flask db upgrade && python trivia_game.py"
+    networks:
+    - app_network
 
 volumes:
   postgres_data:
     driver: local
 
+networks:
+  app_network:
+    driver: bridge

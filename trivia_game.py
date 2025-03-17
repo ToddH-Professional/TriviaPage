@@ -61,6 +61,7 @@ def load_user(user_id):
 
 # Load database URL from environment # Change the env when deploying to dev
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_PUBLIC_URL") 
+
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 # Initialize the database with the app
@@ -484,4 +485,4 @@ def answer():
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()  # Create all tables if they don't exist
-    app.run(debug=False)
+    app.run(debug=True)

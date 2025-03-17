@@ -44,8 +44,10 @@
     <script>
         document.getElementById("choose_category").addEventListener("submit", function(event) {
             const submitButton = document.getElementById("choose_categorybtn");
-            submitButton.disabled = true;
-            submitButton.innerText = "Submitting..."; // Change button text
+            setTimeout(() => {
+                submitButton.disabled = true;
+                submitButton.innerText = "Submitting...";
+            }, 100); // Small delay to allow submission
         }); 
     </script>
     <footer>
