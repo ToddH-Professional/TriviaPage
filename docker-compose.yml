@@ -1,7 +1,10 @@
 services:
   db:  
-    image: postgres:13
-    container_name: dev_postgres
+    image: postgres:15-alpine
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 5s
+      retries: 5
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -17,15 +20,16 @@ services:
       context: .
       dockerfile: dockerfile.dev
     depends_on:
-      - db
-    container_name: trivia_app
+      db:
+        condition: service_healthy
     ports:
       - "8080:8080"
     environment:
       - FLASK_SECRET_KEY
-      - DATABASE_PUBLIC_URL
-      - FLASK_APP=trivia_game.py  
-    command: bash -c "flask db upgrade && python trivia_game.py"
+      - DATABASE_PUBLIC_URL 
+      - FLASK_APP=trivia_game
+    entrypoint: >
+      sh -c "flask db init && flask db migrate && flask db upgrade && gunicorn -b 0.0.0.0:8080 -t 30 --log-level debug trivia_game:app"
     networks:
     - app_network
 
