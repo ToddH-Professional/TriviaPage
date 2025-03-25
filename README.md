@@ -1,5 +1,7 @@
 # Trivia App
 
+https://triviapage-triviapage.up.railway.app
+
 A fun and interactive trivia game that you can play solo! This app is built using Flask and integrates with an external trivia API to generate questions. It supports player tracking, scoring, and a category-based question selection system.
 
 ## Features
@@ -27,6 +29,12 @@ A fun and interactive trivia game that you can play solo! This app is built usin
    ```sh
    git clone https://github.com/ToddH-Professional/TriviaPage.git
    ```
+   1. **Create a .env file for a couple variable
+   ```sh
+   FLASK_SECRET_KEY=""
+   DATABASE_PUBLIC_URL="postgresql://postgres:postgres@db:5432/triviagame_db" 
+   ```
+
 
 ## Running with Docker
 
